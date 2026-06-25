@@ -1,6 +1,6 @@
 {
-  "name": "BODY / ASCII / THREE",
-  "short_name": "Body ASCII",
+  "name": "ASCCI",
+  "short_name": "ASCCI",
   "description": "Experiencia interactiva de cuerpo, cámara y caracteres ASCII creada por David Villafán.",
   "start_url": "./",
   "scope": "./",
