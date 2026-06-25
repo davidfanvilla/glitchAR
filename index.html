@@ -7,20 +7,20 @@
   <meta name="theme-color" content="#030403" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Body ASCII" />
+  <meta name="apple-mobile-web-app-title" content="ASCCI" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="BODY / ASCII / THREE" />
+  <meta property="og:title" content="ASCCI" />
   <meta property="og:description" content="Convierte tu silueta en una señal viva de caracteres ASCII." />
   <meta property="og:url" content="https://davidfanvilla.github.io/glitchAR/" />
   <meta property="og:image" content="https://davidfanvilla.github.io/glitchAR/social-card.svg" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="BODY / ASCII / THREE" />
+  <meta name="twitter:title" content="ASCCI" />
   <meta name="twitter:description" content="Convierte tu silueta en una señal viva de caracteres ASCII." />
   <meta name="twitter:image" content="https://davidfanvilla.github.io/glitchAR/social-card.svg" />
   <link rel="canonical" href="https://davidfanvilla.github.io/glitchAR/" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" href="./icon.svg" type="image/svg+xml" />
-  <title>BODY / ASCII / THREE</title>
+  <title>ASCCI</title>
   <style>
     :root {
       color-scheme: dark;
@@ -34,9 +34,12 @@
       --danger: #ff6b6b;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
-    html, body {
+    html,
+    body {
       width: 100%;
       height: 100%;
       min-height: 100dvh;
@@ -53,115 +56,406 @@
       position: fixed;
       inset: 0;
       min-height: 100dvh;
-      background: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px) 0 0 / 100% 4px, #000;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px) 0 0 / 100% 4px,
+        #000;
     }
 
-    #stage canvas { display: block; width: 100%; height: 100%; }
+    #stage canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
 
     .topbar {
       position: fixed;
-      top: calc(16px + env(safe-area-inset-top));
-      left: calc(16px + env(safe-area-inset-left));
-      right: calc(16px + env(safe-area-inset-right));
+      top: calc(10px + env(safe-area-inset-top));
+      left: calc(10px + env(safe-area-inset-left));
+      right: calc(10px + env(safe-area-inset-right));
       z-index: 3;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 8px;
       pointer-events: none;
     }
 
-    .brand, .status, .share-button {
+    .brand,
+    .status,
+    .share-button {
       border: 1px solid var(--line);
       background: var(--panel);
       backdrop-filter: blur(16px);
-      border-radius: 8px;
-      box-shadow: 0 18px 60px rgba(0,0,0,.32);
+      border-radius: 6px;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.32);
       pointer-events: auto;
     }
 
-    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 10px 12px; }
-    .brand-mark { width: 13px; height: 13px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 18px rgba(184,255,79,.8); flex: 0 0 auto; }
-    .brand-title { font-size: 13px; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .status { max-width: min(480px,48vw); padding: 9px 11px; color: var(--muted); font-size: 12px; line-height: 1.35; text-align: right; }
-    .status strong { color: var(--accent); font-weight: 700; }
-    .top-actions { display: flex; align-items: stretch; justify-content: flex-end; gap: 8px; min-width: 0; }
-    .share-button { width: auto; min-width: 96px; min-height: 0; padding: 8px 11px; color: var(--text); background: var(--panel); border-color: var(--line); font-size: 11px; line-height: 1; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      padding: 6px 8px;
+    }
+
+    .brand-mark {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 18px rgba(184, 255, 79, 0.8);
+      flex: 0 0 auto;
+    }
+
+    .brand-title {
+      font-size: 10px;
+      letter-spacing: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .status {
+      max-width: min(360px, 42vw);
+      padding: 5px 7px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.25;
+      text-align: right;
+    }
+
+    .status strong {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: stretch;
+      justify-content: flex-end;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .share-button {
+      width: auto;
+      min-width: 70px;
+      min-height: 0;
+      padding: 5px 8px;
+      color: var(--text);
+      background: var(--panel);
+      border-color: var(--line);
+      font-size: 9px;
+      line-height: 1;
+    }
 
     .controls {
       position: fixed;
-      left: calc(16px + env(safe-area-inset-left));
-      bottom: calc(16px + env(safe-area-inset-bottom));
+      left: calc(10px + env(safe-area-inset-left));
+      bottom: calc(10px + env(safe-area-inset-bottom));
       z-index: 3;
-      width: min(520px, calc(100vw - 32px));
+      width: min(430px, calc(100vw - 20px));
       display: grid;
-      grid-template-columns: repeat(4,minmax(0,1fr));
-      gap: 10px;
-      padding: 10px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      padding: 7px;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 6px;
       background: var(--panel);
       backdrop-filter: blur(16px);
-      box-shadow: 0 18px 60px rgba(0,0,0,.32);
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.32);
     }
 
-    .control { min-width: 0; }
-    label { display: block; margin: 0 0 6px; color: var(--muted); font-size: 11px; line-height: 1.2; }
-    input, select, button { width: 100%; min-height: 38px; color: var(--text); border: 1px solid var(--line); border-radius: 6px; background: rgba(255,255,255,.055); font: inherit; }
-    input[type="range"] { min-height: 38px; accent-color: var(--accent); }
-    select { padding: 0 9px; appearance: none; background: linear-gradient(45deg,transparent 50%,var(--muted) 50%) calc(100% - 16px) 16px/6px 6px no-repeat, linear-gradient(135deg,var(--muted) 50%,transparent 50%) calc(100% - 10px) 16px/6px 6px no-repeat, rgba(255,255,255,.055); }
-    button { padding: 0 14px; background: var(--accent); color: #081006; border-color: rgba(184,255,79,.72); font-weight: 800; cursor: pointer; }
-    button:disabled { opacity: .55; cursor: wait; }
-
-    .start-card { position: fixed; inset: 0; z-index: 4; display: grid; place-items: center; padding: calc(24px + env(safe-area-inset-top)) calc(24px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left)); background: repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 5px),rgba(0,0,0,.64); }
-    .start-panel { width: min(520px,100%); padding: 22px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-strong); box-shadow: 0 24px 90px rgba(0,0,0,.5); }
-    .start-panel h1 { margin: 0 0 10px; font-size: clamp(26px,6vw,46px); line-height: .98; letter-spacing: 0; }
-    .start-panel p { margin: 0 0 18px; color: var(--muted); font-size: 14px; line-height: 1.55; }
-    .start-panel .actions { display: flex; gap: 10px; align-items: center; }
-    .start-panel button { width: auto; min-width: 174px; }
-    .hint { color: var(--muted); font-size: 11px; line-height: 1.35; }
-    .hidden { display: none; }
-    #camera { position: fixed; width: 2px; height: 2px; left: -10px; bottom: -10px; opacity: .001; pointer-events: none; }
-
-    .signature-trigger { position: fixed; right: calc(12px + env(safe-area-inset-right)); bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 3; width: 28px; height: 28px; min-height: 28px; padding: 0; border-color: transparent; color: rgba(242,246,238,.28); background: transparent; font-size: 9px; letter-spacing: .08em; opacity: .65; touch-action: manipulation; }
-    .signature-trigger:hover, .signature-trigger:focus-visible { color: var(--accent); border-color: var(--line); background: var(--panel); outline: none; }
-    .signature-reveal { position: fixed; right: calc(14px + env(safe-area-inset-right)); bottom: calc(48px + env(safe-area-inset-bottom)); z-index: 5; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--accent); background: var(--panel-strong); box-shadow: 0 12px 40px rgba(0,0,0,.42); font-size: 11px; opacity: 0; transform: translateY(6px); pointer-events: none; transition: opacity 180ms ease,transform 180ms ease; }
-    .signature-reveal.is-visible { opacity: 1; transform: translateY(0); }
-    .error { color: var(--danger); }
-
-    @media (max-width:720px) {
-      .topbar { top: calc(10px + env(safe-area-inset-top)); left: calc(10px + env(safe-area-inset-left)); right: calc(10px + env(safe-area-inset-right)); align-items: stretch; flex-direction: column; }
-      .top-actions { width: 100%; }
-      .status { flex: 1 1 auto; max-width: none; text-align: left; }
-      .controls { left: calc(10px + env(safe-area-inset-left)); right: calc(10px + env(safe-area-inset-right)); bottom: calc(10px + env(safe-area-inset-bottom)); width: auto; grid-template-columns: repeat(2,minmax(0,1fr)); }
-      .signature-trigger { bottom: calc(142px + env(safe-area-inset-bottom)); }
-      .signature-reveal { bottom: calc(176px + env(safe-area-inset-bottom)); }
+    .control {
+      min-width: 0;
     }
 
-    @media (max-height:520px) and (orientation:landscape) {
-      .topbar { flex-direction: row; }
-      .brand-title { display: none; }
-      .controls { grid-template-columns: repeat(4,minmax(0,1fr)); }
-      .signature-trigger { bottom: calc(82px + env(safe-area-inset-bottom)); }
-      .signature-reveal { bottom: calc(116px + env(safe-area-inset-bottom)); }
+    label {
+      display: block;
+      margin: 0 0 2px;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.2;
+    }
+
+    input,
+    select,
+    button {
+      width: 100%;
+      min-height: 28px;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.055);
+      font: inherit;
+    }
+
+    input[type="range"] {
+      min-height: 28px;
+      accent-color: var(--accent);
+    }
+
+    select {
+      padding: 0 7px;
+      font-size: 11px;
+      appearance: none;
+      background:
+        linear-gradient(45deg, transparent 50%, var(--muted) 50%) calc(100% - 13px) 11px / 5px 5px no-repeat,
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%) calc(100% - 8px) 11px / 5px 5px no-repeat,
+        rgba(255, 255, 255, 0.055);
+    }
+
+    button {
+      padding: 0 10px;
+      background: var(--accent);
+      color: #081006;
+      border-color: rgba(184, 255, 79, 0.72);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: wait;
+    }
+
+    .start-card {
+      position: fixed;
+      inset: 0;
+      z-index: 4;
+      display: grid;
+      place-items: center;
+      padding:
+        calc(24px + env(safe-area-inset-top))
+        calc(24px + env(safe-area-inset-right))
+        calc(24px + env(safe-area-inset-bottom))
+        calc(24px + env(safe-area-inset-left));
+      background:
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 5px),
+        rgba(0, 0, 0, 0.64);
+    }
+
+    .start-panel {
+      width: min(440px, 100%);
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-strong);
+      box-shadow: 0 24px 90px rgba(0, 0, 0, 0.5);
+    }
+
+    .start-panel h1 {
+      margin: 0 0 7px;
+      font-size: clamp(24px, 5vw, 36px);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    .start-panel p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .start-panel .actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .start-panel button {
+      width: auto;
+      min-width: 150px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #camera {
+      position: fixed;
+      width: 2px;
+      height: 2px;
+      left: -10px;
+      bottom: -10px;
+      opacity: 0.001;
+      pointer-events: none;
+    }
+
+    .signature-trigger {
+      position: fixed;
+      right: calc(12px + env(safe-area-inset-right));
+      bottom: calc(12px + env(safe-area-inset-bottom));
+      z-index: 3;
+      width: 28px;
+      height: 28px;
+      min-height: 28px;
+      padding: 0;
+      border-color: transparent;
+      color: rgba(242, 246, 238, 0.28);
+      background: transparent;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      opacity: 0.65;
+      touch-action: manipulation;
+    }
+
+    .signature-trigger:hover,
+    .signature-trigger:focus-visible {
+      color: var(--accent);
+      border-color: var(--line);
+      background: var(--panel);
+      outline: none;
+    }
+
+    .signature-reveal {
+      position: fixed;
+      right: calc(14px + env(safe-area-inset-right));
+      bottom: calc(48px + env(safe-area-inset-bottom));
+      z-index: 5;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--accent);
+      background: var(--panel-strong);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.42);
+      font-size: 11px;
+      opacity: 0;
+      transform: translateY(6px);
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .signature-reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .error {
+      color: var(--danger);
+    }
+
+    @media (max-width: 720px) {
+      .topbar {
+        top: calc(6px + env(safe-area-inset-top));
+        left: calc(6px + env(safe-area-inset-left));
+        right: calc(6px + env(safe-area-inset-right));
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .top-actions {
+        width: 100%;
+      }
+
+      .status {
+        flex: 1 1 auto;
+        max-width: none;
+        text-align: left;
+      }
+
+      .controls {
+        left: calc(6px + env(safe-area-inset-left));
+        right: calc(6px + env(safe-area-inset-right));
+        bottom: calc(6px + env(safe-area-inset-bottom));
+        width: auto;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .signature-trigger {
+        bottom: calc(106px + env(safe-area-inset-bottom));
+      }
+
+      .signature-reveal {
+        bottom: calc(140px + env(safe-area-inset-bottom));
+      }
+    }
+
+    @media (max-height: 520px) and (orientation: landscape) {
+      .topbar {
+        flex-direction: row;
+      }
+
+      .brand-title {
+        display: none;
+      }
+
+      .controls {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .signature-trigger {
+        bottom: calc(66px + env(safe-area-inset-bottom));
+      }
+
+      .signature-reveal {
+        bottom: calc(100px + env(safe-area-inset-bottom));
+      }
     }
   </style>
 </head>
 <body>
   <main id="stage" aria-label="Render ASCII de la cámara"></main>
+
   <div class="topbar">
-    <div class="brand" aria-label="Nombre de la experiencia"><span class="brand-mark" aria-hidden="true"></span><span class="brand-title">BODY / ASCII / THREE</span></div>
-    <div class="top-actions"><div class="status" id="status">Listo para iniciar.</div><button class="share-button" id="shareButton" type="button">Compartir</button></div>
+    <div class="brand" aria-label="Nombre de la experiencia">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-title">ASCCI</span>
+    </div>
+    <div class="top-actions">
+      <div class="status" id="status">Listo para iniciar.</div>
+      <button class="share-button" id="shareButton" type="button">Compartir</button>
+    </div>
   </div>
+
   <section class="controls" aria-label="Controles visuales">
-    <div class="control"><label for="cellSize">Tamaño ASCII</label><input id="cellSize" type="range" min="5" max="18" step="1" value="7" /></div>
-    <div class="control"><label for="smoothness">Suavizado</label><input id="smoothness" type="range" min="0" max="95" step="1" value="72" /></div>
-    <div class="control"><label for="threshold">Sensibilidad</label><input id="threshold" type="range" min="28" max="82" step="1" value="48" /></div>
-    <div class="control"><label for="palette">Color</label><select id="palette"><option value="0">Blanco</option><option value="1">Cámara</option><option value="2">Señal</option></select></div>
+    <div class="control">
+      <label for="cellSize">Tamaño ASCII</label>
+      <input id="cellSize" type="range" min="5" max="18" step="1" value="7" />
+    </div>
+    <div class="control">
+      <label for="smoothness">Suavizado</label>
+      <input id="smoothness" type="range" min="0" max="95" step="1" value="72" />
+    </div>
+    <div class="control">
+      <label for="threshold">Sensibilidad</label>
+      <input id="threshold" type="range" min="28" max="82" step="1" value="48" />
+    </div>
+    <div class="control">
+      <label for="palette">Color</label>
+      <select id="palette">
+        <option value="0">Blanco</option>
+        <option value="1">Cámara</option>
+        <option value="2">Señal</option>
+      </select>
+    </div>
   </section>
-  <section class="start-card" id="startCard" aria-label="Iniciar cámara"><div class="start-panel"><h1>Tu cuerpo como señal.</h1><p>Esta versión usa Three.js para dibujar una malla ASCII de alta definición sobre la silueta detectada y suaviza la máscara entre frames.</p><div class="actions"><button id="startButton">Iniciar cámara</button><span class="hint">Funciona mejor con buena luz y fondo contrastado.</span></div></div></section>
+
+  <section class="start-card" id="startCard" aria-label="Iniciar cámara">
+    <div class="start-panel">
+      <h1>Tu cuerpo como señal.</h1>
+      <p>
+        Esta versión usa Three.js para dibujar una malla ASCII de alta definición
+        sobre la silueta detectada y suaviza la máscara entre frames.
+      </p>
+      <div class="actions">
+        <button id="startButton">Iniciar cámara</button>
+        <span class="hint">Funciona mejor con buena luz y fondo contrastado.</span>
+      </div>
+    </div>
+  </section>
+
   <button class="signature-trigger" id="signatureTrigger" type="button" aria-label="Descubrir firma">DV</button>
   <div class="signature-reveal" id="signatureReveal" role="status" aria-live="polite">David Villafán®</div>
+
   <video id="camera" playsinline muted autoplay></video>
 
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@4.22.0/dist/tf-core.min.js"></script>
@@ -170,39 +464,562 @@
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-cpu@4.22.0/dist/tf-backend-cpu.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1/selfie_segmentation.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-segmentation@1.0.2/dist/body-segmentation.min.js"></script>
-  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.module.js"}}</script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.module.js"
+      }
+    }
+  </script>
+
   <script type="module">
     import * as THREE from "three";
-    const charPool=[" ",".","-","=","+","π","ℏ","ψ","λ","Ω","Σ","∞","∇","42","137","e","c","G","X","Z","Q","M","CIA","MK","UFO"];
-    const state={running:false,booting:false,renderer:null,scene:null,camera:null,material:null,videoTexture:null,maskTexture:null,glyphTexture:null,glyphCanvas:document.createElement("canvas"),glyphCols:5,glyphRows:4,glyphCell:128,segmenter:null,targetMask:null,smoothMask:null,uploadMask:null,maskBaseWidth:512,maskWidth:512,maskHeight:288,maskSourceCanvas:document.createElement("canvas"),maskScaleCanvas:document.createElement("canvas"),maskSourceContext:null,maskScaleContext:null,confidenceThreshold:.48,smoothness:.72,cellSize:7,palette:0,mobileProfile:false,pixelRatioCap:2.5,cameraWidth:1920,cameraHeight:1080,lastFrameTime:performance.now(),lastGlyphShuffle:0,segmentationFps:0,renderFps:0,lastFpsUpdate:performance.now(),framesSinceFps:0};
-    const stage=document.querySelector("#stage"),video=document.querySelector("#camera"),statusEl=document.querySelector("#status"),startCard=document.querySelector("#startCard"),startButton=document.querySelector("#startButton"),shareButton=document.querySelector("#shareButton"),signatureTrigger=document.querySelector("#signatureTrigger"),signatureReveal=document.querySelector("#signatureReveal"),cellSizeInput=document.querySelector("#cellSize"),smoothnessInput=document.querySelector("#smoothness"),thresholdInput=document.querySelector("#threshold"),paletteSelect=document.querySelector("#palette");
-    startButton.addEventListener("click",startExperience);shareButton.addEventListener("click",shareExperience);signatureTrigger.addEventListener("click",revealSignature);
-    cellSizeInput.addEventListener("input",()=>{state.cellSize=Number(cellSizeInput.value);if(state.material)state.material.uniforms.uCellSize.value=state.cellSize});
-    smoothnessInput.addEventListener("input",()=>state.smoothness=Number(smoothnessInput.value)/100);
-    thresholdInput.addEventListener("input",()=>state.confidenceThreshold=Number(thresholdInput.value)/100);
-    paletteSelect.addEventListener("change",()=>{state.palette=Number(paletteSelect.value);if(state.material)state.material.uniforms.uPalette.value=state.palette});
-    window.addEventListener("resize",resizeRenderer);window.addEventListener("orientationchange",()=>window.setTimeout(resizeRenderer,180));
-    document.addEventListener("visibilitychange",()=>{if(document.hidden)setStatus("Pausado mientras la pestaña está oculta.");else if(state.running)setStatus("Cámara activa. Recalibrando la máscara...")});
-    function setStatus(message,tone="normal"){statusEl.classList.toggle("error",tone==="error");statusEl.innerHTML=message}
-    async function startExperience(){if(state.booting||state.running)return;state.booting=true;startButton.disabled=true;startButton.textContent="Preparando...";setStatus("Abriendo cámara y cargando detección...");try{assertLibraries();configureDeviceProfile();await setupCamera();await setupModel();setupThree();shuffleGlyphs();state.running=true;startCard.classList.add("hidden");startButton.disabled=false;startButton.textContent="Iniciar cámara";setStatus("Cámara activa. <strong>Muévete frente al lente.</strong>");segmentationLoop();requestAnimationFrame(renderLoop)}catch(error){console.error(error);state.booting=false;startButton.disabled=false;startButton.textContent="Intentar de nuevo";setStatus(readableError(error),"error")}}
-    function assertLibraries(){if(!window.tf||!window.bodySegmentation||!window.SelfieSegmentation)throw new Error("No se pudieron cargar las librerías externas.");if(!navigator.mediaDevices?.getUserMedia)throw new Error("Este navegador no permite capturar cámara desde aquí.")}
-    function configureDeviceProfile(){const coarsePointer=window.matchMedia("(pointer: coarse)").matches,compactScreen=Math.min(window.screen.width,window.screen.height)<820;state.mobileProfile=coarsePointer||compactScreen;state.maskBaseWidth=state.mobileProfile?384:512;state.pixelRatioCap=state.mobileProfile?2:2.5;state.cameraWidth=state.mobileProfile?1280:1920;state.cameraHeight=state.mobileProfile?720:1080}
-    async function setupCamera(){const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:"user",width:{ideal:state.cameraWidth},height:{ideal:state.cameraHeight},frameRate:{ideal:60,max:60}}});video.srcObject=stream;await video.play();if(!video.videoWidth||!video.videoHeight)await new Promise(resolve=>video.onloadedmetadata=resolve)}
-    async function setupModel(){setStatus("Afinando la detección en GPU...");tf.env().set("WEBGL_PACK",true);await tf.setBackend("webgl").catch(async()=>{await tf.setBackend("cpu")});await tf.ready();const model=bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation;state.segmenter=await bodySegmentation.createSegmenter(model,{runtime:"mediapipe",modelType:"general",solutionPath:"https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1"})}
-    function setupThree(){state.renderer=new THREE.WebGLRenderer({antialias:false,alpha:false,powerPreference:"high-performance"});state.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,state.pixelRatioCap));state.renderer.setClearColor(0x000000,1);stage.appendChild(state.renderer.domElement);state.scene=new THREE.Scene;state.camera=new THREE.OrthographicCamera(-1,1,1,-1,0,1);state.videoTexture=new THREE.VideoTexture(video);state.videoTexture.minFilter=THREE.LinearFilter;state.videoTexture.magFilter=THREE.LinearFilter;state.videoTexture.colorSpace=THREE.SRGBColorSpace;setupMaskBuffers();state.maskTexture=new THREE.DataTexture(state.uploadMask,state.maskWidth,state.maskHeight,THREE.RedFormat,THREE.UnsignedByteType);state.maskTexture.minFilter=THREE.LinearFilter;state.maskTexture.magFilter=THREE.LinearFilter;state.maskTexture.wrapS=THREE.ClampToEdgeWrapping;state.maskTexture.wrapT=THREE.ClampToEdgeWrapping;state.maskTexture.flipY=true;state.maskTexture.unpackAlignment=1;state.maskTexture.needsUpdate=true;state.glyphTexture=new THREE.CanvasTexture(state.glyphCanvas);state.glyphTexture.minFilter=THREE.LinearFilter;state.glyphTexture.magFilter=THREE.LinearFilter;state.glyphTexture.wrapS=THREE.ClampToEdgeWrapping;state.glyphTexture.wrapT=THREE.ClampToEdgeWrapping;state.glyphTexture.flipY=true;state.material=new THREE.ShaderMaterial({depthTest:false,depthWrite:false,uniforms:{uVideo:{value:state.videoTexture},uMask:{value:state.maskTexture},uGlyphAtlas:{value:state.glyphTexture},uResolution:{value:new THREE.Vector2(window.innerWidth,window.innerHeight)},uCellSize:{value:state.cellSize},uTime:{value:0},uCharCount:{value:20},uAtlasCols:{value:state.glyphCols},uAtlasRows:{value:state.glyphRows},uPalette:{value:state.palette}},vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}`,fragmentShader:`precision highp float;uniform sampler2D uVideo;uniform sampler2D uMask;uniform sampler2D uGlyphAtlas;uniform vec2 uResolution;uniform float uCellSize;uniform float uTime;uniform float uCharCount;uniform float uAtlasCols;uniform float uAtlasRows;uniform float uPalette;varying vec2 vUv;float random(vec2 st){return fract(sin(dot(st.xy,vec2(12.9898,78.233)))*43758.5453123);}void main(){vec2 pixel=vUv*uResolution;vec2 cell=floor(pixel/uCellSize);vec2 local=fract(pixel/uCellSize);vec2 cellCenter=((cell+.5)*uCellSize)/uResolution;vec2 sourceUv=vec2(1.-cellCenter.x,cellCenter.y);vec2 liveUv=vec2(1.-vUv.x,vUv.y);float maskValue=texture2D(uMask,sourceUv).r;float body=smoothstep(.36,.62,maskValue);vec3 cellColor=texture2D(uVideo,sourceUv).rgb;vec3 liveColor=texture2D(uVideo,liveUv).rgb;float luminance=dot(cellColor,vec3(.299,.587,.114));float flicker=random(cell+floor(uTime*7.5))*.08-.025;float charIndex=floor(clamp(luminance+flicker,0.,.999)*uCharCount);vec2 tile=vec2(mod(charIndex,uAtlasCols),floor(charIndex/uAtlasCols));float rowFromBottom=uAtlasRows-1.-tile.y;vec2 atlasUv=(vec2(tile.x,rowFromBottom)+local)/vec2(uAtlasCols,uAtlasRows);vec4 glyph=texture2D(uGlyphAtlas,atlasUv);float edgeFade=smoothstep(.01,.06,local.x)*smoothstep(.01,.06,local.y)*smoothstep(.01,.06,1.-local.x)*smoothstep(.01,.06,1.-local.y);float ink=smoothstep(.14,.70,glyph.a)*edgeFade*body;vec3 whiteInk=vec3(.94,.98,.91);vec3 cameraInk=clamp(liveColor*1.65+vec3(.05),0.,1.);vec3 signalInk=mix(vec3(.30,1.,.45),vec3(1.,.82,.22),luminance);vec3 inkColor=whiteInk;if(uPalette>1.5)inkColor=signalInk;else if(uPalette>.5)inkColor=cameraInk;float scan=.94+.06*sin(pixel.y*1.55+uTime*8.);float glow=body*smoothstep(.12,.64,maskValue)*.018;vec3 color=inkColor*ink*scan+inkColor*glow;gl_FragColor=vec4(color,1.);}`});state.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),state.material));resizeRenderer()}
-    function setupMaskBuffers(){const aspect=video.videoWidth&&video.videoHeight?video.videoWidth/video.videoHeight:window.innerWidth/window.innerHeight;state.maskWidth=state.maskBaseWidth;state.maskHeight=Math.max(180,Math.round(state.maskWidth/aspect));state.targetMask=new Float32Array(state.maskWidth*state.maskHeight);state.smoothMask=new Float32Array(state.maskWidth*state.maskHeight);state.uploadMask=new Uint8Array(state.maskWidth*state.maskHeight);state.maskScaleCanvas.width=state.maskWidth;state.maskScaleCanvas.height=state.maskHeight;state.maskScaleContext=state.maskScaleCanvas.getContext("2d",{willReadFrequently:true});state.maskSourceContext=state.maskSourceCanvas.getContext("2d",{willReadFrequently:true})}
-    function shuffleGlyphs(){const readableRamp=[" ",".","-","=","+"],activePool=charPool.filter(char=>char!==" "),chars=readableRamp.concat(Array.from({length:15},()=>activePool[Math.floor(Math.random()*activePool.length)])),canvas=state.glyphCanvas,cols=state.glyphCols,rows=state.glyphRows,cell=state.glyphCell;canvas.width=cols*cell;canvas.height=rows*cell;const context=canvas.getContext("2d");context.clearRect(0,0,canvas.width,canvas.height);context.fillStyle="white";context.textAlign="center";context.textBaseline="middle";chars.forEach((char,index)=>{const col=index%cols,row=Math.floor(index/cols),x=col*cell+cell/2,y=row*cell+cell/2;fitGlyph(context,char,cell*.62,cell*.74);context.fillText(char,x,y+cell*.035)});if(state.glyphTexture)state.glyphTexture.needsUpdate=true;if(state.material){state.material.uniforms.uCharCount.value=chars.length;state.material.uniforms.uAtlasCols.value=cols;state.material.uniforms.uAtlasRows.value=rows}}
-    function fitGlyph(context,char,maxSize,maxWidth){let size=maxSize;do{context.font=`800 ${size}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`;if(context.measureText(char).width<=maxWidth||size<=18)break;size-=2}while(size>18)}
-    async function segmentationLoop(){while(state.running){if(document.hidden){await wait(250);continue}const started=performance.now();try{const people=await state.segmenter.segmentPeople(video,{flipHorizontal:false,multiSegmentation:false});const mask=await bodySegmentation.toBinaryMask(people,{r:255,g:255,b:255,a:255},{r:0,g:0,b:0,a:255},false,state.confidenceThreshold);copyMaskToTarget(mask);state.segmentationFps=1000/Math.max(1,performance.now()-started)}catch(error){console.error(error);setStatus("La detección se interrumpió. Reintentando con la siguiente imagen...","error");await wait(200)}const elapsed=performance.now()-started;await wait(Math.max(0,1000/30-elapsed))}}
-    function copyMaskToTarget(mask){if(!mask)return;if(mask.width&&mask.height&&mask.data){if(state.maskSourceCanvas.width!==mask.width||state.maskSourceCanvas.height!==mask.height){state.maskSourceCanvas.width=mask.width;state.maskSourceCanvas.height=mask.height}state.maskSourceContext.putImageData(mask,0,0)}else{const width=video.videoWidth||state.maskWidth,height=video.videoHeight||state.maskHeight;if(state.maskSourceCanvas.width!==width||state.maskSourceCanvas.height!==height){state.maskSourceCanvas.width=width;state.maskSourceCanvas.height=height}state.maskSourceContext.clearRect(0,0,width,height);state.maskSourceContext.drawImage(mask,0,0,width,height)}state.maskScaleContext.clearRect(0,0,state.maskWidth,state.maskHeight);state.maskScaleContext.drawImage(state.maskSourceCanvas,0,0,state.maskWidth,state.maskHeight);const pixels=state.maskScaleContext.getImageData(0,0,state.maskWidth,state.maskHeight).data;for(let i=0,j=0;i<state.targetMask.length;i++,j+=4)state.targetMask[i]=pixels[j]/255}
-    function renderLoop(now){if(!state.running)return;const deltaSeconds=Math.min(.05,Math.max(.001,(now-state.lastFrameTime)/1000));state.lastFrameTime=now;updateSmoothedMask(deltaSeconds);if(now-state.lastGlyphShuffle>250){shuffleGlyphs();state.lastGlyphShuffle=now}state.material.uniforms.uTime.value=now/1000;state.renderer.render(state.scene,state.camera);updateFps(now);requestAnimationFrame(renderLoop)}
-    function updateSmoothedMask(deltaSeconds){const responsiveness=1-Math.pow(state.smoothness,deltaSeconds*60);for(let i=0;i<state.smoothMask.length;i++){state.smoothMask[i]+=(state.targetMask[i]-state.smoothMask[i])*responsiveness;state.uploadMask[i]=Math.round(state.smoothMask[i]*255)}state.maskTexture.needsUpdate=true}
-    function updateFps(now){state.framesSinceFps++;const elapsed=now-state.lastFpsUpdate;if(elapsed<700)return;state.renderFps=state.framesSinceFps*1000/elapsed;state.framesSinceFps=0;state.lastFpsUpdate=now;setStatus(`Cámara activa. <strong>${state.renderFps.toFixed(0)} fps</strong> render · <strong>${state.segmentationFps.toFixed(0)} fps</strong> detección`)}
-    function resizeRenderer(){if(!state.renderer||!state.material)return;state.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,state.pixelRatioCap));state.renderer.setSize(window.innerWidth,window.innerHeight,false);state.material.uniforms.uResolution.value.set(window.innerWidth,window.innerHeight)}
-    async function shareExperience(){const shareData={title:"BODY / ASCII / THREE",text:"Convierte tu silueta en una señal viva de caracteres ASCII.",url:window.location.href};try{if(navigator.share){await navigator.share(shareData);return}await navigator.clipboard.writeText(shareData.url);setStatus("Enlace copiado. <strong>Listo para compartir.</strong>")}catch(error){if(error?.name!=="AbortError")setStatus("No se pudo compartir automáticamente. Copia la dirección del navegador.","error")}}
-    let signatureTimer;function revealSignature(){window.clearTimeout(signatureTimer);signatureReveal.classList.add("is-visible");signatureTimer=window.setTimeout(()=>signatureReveal.classList.remove("is-visible"),3200)}
-    function readableError(error){const message=error?.message||"";if(message.includes("Permission")||message.includes("denied")||message.includes("NotAllowed"))return "El navegador bloqueó la cámara. Dale permiso y vuelve a intentarlo.";if(message.includes("librerías externas"))return "No se cargaron Three.js o la detección. Revisa tu conexión y recarga la página.";if(location.protocol==="file:")return "Abre esta página desde un servidor local, no como archivo directo, para que la cámara funcione.";return "No se pudo iniciar la experiencia. Revisa permisos de cámara y conexión."}
-    function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+
+    const charPool = [
+      " ", ".", "-", "=", "+", "π", "ℏ", "ψ", "λ", "Ω", "Σ", "∞", "∇",
+      "42", "137", "e", "c", "G", "X", "Z", "Q", "M", "CIA", "MK", "UFO"
+    ];
+
+    const state = {
+      running: false,
+      booting: false,
+      renderer: null,
+      scene: null,
+      camera: null,
+      material: null,
+      videoTexture: null,
+      maskTexture: null,
+      glyphTexture: null,
+      glyphCanvas: document.createElement("canvas"),
+      glyphCols: 5,
+      glyphRows: 4,
+      glyphCell: 128,
+      segmenter: null,
+      targetMask: null,
+      smoothMask: null,
+      uploadMask: null,
+      maskBaseWidth: 512,
+      maskWidth: 512,
+      maskHeight: 288,
+      maskSourceCanvas: document.createElement("canvas"),
+      maskScaleCanvas: document.createElement("canvas"),
+      maskSourceContext: null,
+      maskScaleContext: null,
+      confidenceThreshold: 0.48,
+      smoothness: 0.72,
+      cellSize: 7,
+      palette: 0,
+      mobileProfile: false,
+      pixelRatioCap: 2.5,
+      cameraWidth: 1920,
+      cameraHeight: 1080,
+      lastFrameTime: performance.now(),
+      lastGlyphShuffle: 0,
+      segmentationFps: 0,
+      renderFps: 0,
+      lastFpsUpdate: performance.now(),
+      framesSinceFps: 0
+    };
+
+    const stage = document.querySelector("#stage");
+    const video = document.querySelector("#camera");
+    const statusEl = document.querySelector("#status");
+    const startCard = document.querySelector("#startCard");
+    const startButton = document.querySelector("#startButton");
+    const shareButton = document.querySelector("#shareButton");
+    const signatureTrigger = document.querySelector("#signatureTrigger");
+    const signatureReveal = document.querySelector("#signatureReveal");
+    const cellSizeInput = document.querySelector("#cellSize");
+    const smoothnessInput = document.querySelector("#smoothness");
+    const thresholdInput = document.querySelector("#threshold");
+    const paletteSelect = document.querySelector("#palette");
+
+    startButton.addEventListener("click", startExperience);
+    shareButton.addEventListener("click", shareExperience);
+    signatureTrigger.addEventListener("click", revealSignature);
+    cellSizeInput.addEventListener("input", () => {
+      state.cellSize = Number(cellSizeInput.value);
+      if (state.material) state.material.uniforms.uCellSize.value = state.cellSize;
+    });
+    smoothnessInput.addEventListener("input", () => {
+      state.smoothness = Number(smoothnessInput.value) / 100;
+    });
+    thresholdInput.addEventListener("input", () => {
+      state.confidenceThreshold = Number(thresholdInput.value) / 100;
+    });
+    paletteSelect.addEventListener("change", () => {
+      state.palette = Number(paletteSelect.value);
+      if (state.material) state.material.uniforms.uPalette.value = state.palette;
+    });
+    window.addEventListener("resize", resizeRenderer);
+    window.addEventListener("orientationchange", () => {
+      window.setTimeout(resizeRenderer, 180);
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        setStatus("Pausado mientras la pestaña está oculta.");
+      } else if (state.running) {
+        setStatus("Cámara activa. Recalibrando la máscara...");
+      }
+    });
+
+    function setStatus(message, tone = "normal") {
+      statusEl.classList.toggle("error", tone === "error");
+      statusEl.innerHTML = message;
+    }
+
+    async function startExperience() {
+      if (state.booting || state.running) return;
+      state.booting = true;
+      startButton.disabled = true;
+      startButton.textContent = "Preparando...";
+      setStatus("Abriendo cámara y cargando detección...");
+
+      try {
+        assertLibraries();
+        configureDeviceProfile();
+        await setupCamera();
+        await setupModel();
+        setupThree();
+        shuffleGlyphs();
+        state.running = true;
+        startCard.classList.add("hidden");
+        startButton.disabled = false;
+        startButton.textContent = "Iniciar cámara";
+        setStatus("Cámara activa. <strong>Muévete frente al lente.</strong>");
+        segmentationLoop();
+        requestAnimationFrame(renderLoop);
+      } catch (error) {
+        console.error(error);
+        state.booting = false;
+        startButton.disabled = false;
+        startButton.textContent = "Intentar de nuevo";
+        setStatus(readableError(error), "error");
+      }
+    }
+
+    function assertLibraries() {
+      if (!window.tf || !window.bodySegmentation || !window.SelfieSegmentation) {
+        throw new Error("No se pudieron cargar las librerías externas.");
+      }
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("Este navegador no permite capturar cámara desde aquí.");
+      }
+    }
+
+    function configureDeviceProfile() {
+      const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+      const compactScreen = Math.min(window.screen.width, window.screen.height) < 820;
+      state.mobileProfile = coarsePointer || compactScreen;
+      state.maskBaseWidth = state.mobileProfile ? 384 : 512;
+      state.pixelRatioCap = state.mobileProfile ? 2 : 2.5;
+      state.cameraWidth = state.mobileProfile ? 1280 : 1920;
+      state.cameraHeight = state.mobileProfile ? 720 : 1080;
+    }
+
+    async function setupCamera() {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          facingMode: "user",
+          width: { ideal: state.cameraWidth },
+          height: { ideal: state.cameraHeight },
+          frameRate: { ideal: 60, max: 60 }
+        }
+      });
+
+      video.srcObject = stream;
+      await video.play();
+
+      if (!video.videoWidth || !video.videoHeight) {
+        await new Promise((resolve) => {
+          video.onloadedmetadata = resolve;
+        });
+      }
+    }
+
+    async function setupModel() {
+      setStatus("Afinando la detección en GPU...");
+      tf.env().set("WEBGL_PACK", true);
+      await tf.setBackend("webgl").catch(async () => {
+        await tf.setBackend("cpu");
+      });
+      await tf.ready();
+
+      const model = bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation;
+      state.segmenter = await bodySegmentation.createSegmenter(model, {
+        runtime: "mediapipe",
+        modelType: "general",
+        solutionPath: "https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1"
+      });
+    }
+
+    function setupThree() {
+      state.renderer = new THREE.WebGLRenderer({
+        antialias: false,
+        alpha: false,
+        powerPreference: "high-performance"
+      });
+      state.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, state.pixelRatioCap));
+      state.renderer.setClearColor(0x000000, 1);
+      stage.appendChild(state.renderer.domElement);
+
+      state.scene = new THREE.Scene();
+      state.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+      state.videoTexture = new THREE.VideoTexture(video);
+      state.videoTexture.minFilter = THREE.LinearFilter;
+      state.videoTexture.magFilter = THREE.LinearFilter;
+      state.videoTexture.colorSpace = THREE.SRGBColorSpace;
+
+      setupMaskBuffers();
+      state.maskTexture = new THREE.DataTexture(
+        state.uploadMask,
+        state.maskWidth,
+        state.maskHeight,
+        THREE.RedFormat,
+        THREE.UnsignedByteType
+      );
+      state.maskTexture.minFilter = THREE.LinearFilter;
+      state.maskTexture.magFilter = THREE.LinearFilter;
+      state.maskTexture.wrapS = THREE.ClampToEdgeWrapping;
+      state.maskTexture.wrapT = THREE.ClampToEdgeWrapping;
+      state.maskTexture.flipY = true;
+      state.maskTexture.unpackAlignment = 1;
+      state.maskTexture.needsUpdate = true;
+
+      state.glyphTexture = new THREE.CanvasTexture(state.glyphCanvas);
+      state.glyphTexture.minFilter = THREE.LinearFilter;
+      state.glyphTexture.magFilter = THREE.LinearFilter;
+      state.glyphTexture.wrapS = THREE.ClampToEdgeWrapping;
+      state.glyphTexture.wrapT = THREE.ClampToEdgeWrapping;
+      state.glyphTexture.flipY = true;
+
+      state.material = new THREE.ShaderMaterial({
+        depthTest: false,
+        depthWrite: false,
+        uniforms: {
+          uVideo: { value: state.videoTexture },
+          uMask: { value: state.maskTexture },
+          uGlyphAtlas: { value: state.glyphTexture },
+          uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+          uCellSize: { value: state.cellSize },
+          uTime: { value: 0 },
+          uCharCount: { value: 20 },
+          uAtlasCols: { value: state.glyphCols },
+          uAtlasRows: { value: state.glyphRows },
+          uPalette: { value: state.palette }
+        },
+        vertexShader: `
+          varying vec2 vUv;
+
+          void main() {
+            vUv = uv;
+            gl_Position = vec4(position.xy, 0.0, 1.0);
+          }
+        `,
+        fragmentShader: `
+          precision highp float;
+
+          uniform sampler2D uVideo;
+          uniform sampler2D uMask;
+          uniform sampler2D uGlyphAtlas;
+          uniform vec2 uResolution;
+          uniform float uCellSize;
+          uniform float uTime;
+          uniform float uCharCount;
+          uniform float uAtlasCols;
+          uniform float uAtlasRows;
+          uniform float uPalette;
+
+          varying vec2 vUv;
+
+          float random(vec2 st) {
+            return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+          }
+
+          void main() {
+            vec2 pixel = vUv * uResolution;
+            vec2 cell = floor(pixel / uCellSize);
+            vec2 local = fract(pixel / uCellSize);
+            vec2 cellCenter = ((cell + 0.5) * uCellSize) / uResolution;
+
+            vec2 sourceUv = vec2(1.0 - cellCenter.x, cellCenter.y);
+            vec2 liveUv = vec2(1.0 - vUv.x, vUv.y);
+
+            float maskValue = texture2D(uMask, sourceUv).r;
+            float body = smoothstep(0.36, 0.62, maskValue);
+
+            vec3 cellColor = texture2D(uVideo, sourceUv).rgb;
+            vec3 liveColor = texture2D(uVideo, liveUv).rgb;
+            float luminance = dot(cellColor, vec3(0.299, 0.587, 0.114));
+
+            float flicker = random(cell + floor(uTime * 7.5)) * 0.08 - 0.025;
+            float charIndex = floor(clamp(luminance + flicker, 0.0, 0.999) * uCharCount);
+            vec2 tile = vec2(mod(charIndex, uAtlasCols), floor(charIndex / uAtlasCols));
+            float rowFromBottom = uAtlasRows - 1.0 - tile.y;
+            vec2 atlasUv = (vec2(tile.x, rowFromBottom) + local) / vec2(uAtlasCols, uAtlasRows);
+            vec4 glyph = texture2D(uGlyphAtlas, atlasUv);
+
+            float edgeFade = smoothstep(0.01, 0.06, local.x)
+              * smoothstep(0.01, 0.06, local.y)
+              * smoothstep(0.01, 0.06, 1.0 - local.x)
+              * smoothstep(0.01, 0.06, 1.0 - local.y);
+            float ink = smoothstep(0.14, 0.70, glyph.a) * edgeFade * body;
+
+            vec3 whiteInk = vec3(0.94, 0.98, 0.91);
+            vec3 cameraInk = clamp(liveColor * 1.65 + vec3(0.05), 0.0, 1.0);
+            vec3 signalInk = mix(vec3(0.30, 1.00, 0.45), vec3(1.00, 0.82, 0.22), luminance);
+
+            vec3 inkColor = whiteInk;
+            if (uPalette > 1.5) {
+              inkColor = signalInk;
+            } else if (uPalette > 0.5) {
+              inkColor = cameraInk;
+            }
+
+            float scan = 0.94 + 0.06 * sin(pixel.y * 1.55 + uTime * 8.0);
+            float glow = body * smoothstep(0.12, 0.64, maskValue) * 0.018;
+            vec3 color = inkColor * ink * scan + inkColor * glow;
+
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `
+      });
+
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), state.material);
+      state.scene.add(mesh);
+      resizeRenderer();
+    }
+
+    function setupMaskBuffers() {
+      const aspect = video.videoWidth && video.videoHeight
+        ? video.videoWidth / video.videoHeight
+        : window.innerWidth / window.innerHeight;
+      state.maskWidth = state.maskBaseWidth;
+      state.maskHeight = Math.max(180, Math.round(state.maskWidth / aspect));
+      state.targetMask = new Float32Array(state.maskWidth * state.maskHeight);
+      state.smoothMask = new Float32Array(state.maskWidth * state.maskHeight);
+      state.uploadMask = new Uint8Array(state.maskWidth * state.maskHeight);
+      state.maskScaleCanvas.width = state.maskWidth;
+      state.maskScaleCanvas.height = state.maskHeight;
+      state.maskScaleContext = state.maskScaleCanvas.getContext("2d", { willReadFrequently: true });
+      state.maskSourceContext = state.maskSourceCanvas.getContext("2d", { willReadFrequently: true });
+    }
+
+    function shuffleGlyphs() {
+      const readableRamp = [" ", ".", "-", "=", "+"];
+      const activePool = charPool.filter((char) => char !== " ");
+      const chars = readableRamp.concat(Array.from({ length: 15 }, () => {
+        return activePool[Math.floor(Math.random() * activePool.length)];
+      }));
+
+      const canvas = state.glyphCanvas;
+      const cols = state.glyphCols;
+      const rows = state.glyphRows;
+      const cell = state.glyphCell;
+      canvas.width = cols * cell;
+      canvas.height = rows * cell;
+
+      const context = canvas.getContext("2d");
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = "white";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+
+      chars.forEach((char, index) => {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        const x = col * cell + cell / 2;
+        const y = row * cell + cell / 2;
+        fitGlyph(context, char, cell * 0.62, cell * 0.74);
+        context.fillText(char, x, y + cell * 0.035);
+      });
+
+      if (state.glyphTexture) {
+        state.glyphTexture.needsUpdate = true;
+      }
+      if (state.material) {
+        state.material.uniforms.uCharCount.value = chars.length;
+        state.material.uniforms.uAtlasCols.value = cols;
+        state.material.uniforms.uAtlasRows.value = rows;
+      }
+    }
+
+    function fitGlyph(context, char, maxSize, maxWidth) {
+      let size = maxSize;
+      do {
+        context.font = `800 ${size}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`;
+        if (context.measureText(char).width <= maxWidth || size <= 18) break;
+        size -= 2;
+      } while (size > 18);
+    }
+
+    async function segmentationLoop() {
+      while (state.running) {
+        if (document.hidden) {
+          await wait(250);
+          continue;
+        }
+
+        const started = performance.now();
+        try {
+          const people = await state.segmenter.segmentPeople(video, {
+            flipHorizontal: false,
+            multiSegmentation: false
+          });
+
+          const mask = await bodySegmentation.toBinaryMask(
+            people,
+            { r: 255, g: 255, b: 255, a: 255 },
+            { r: 0, g: 0, b: 0, a: 255 },
+            false,
+            state.confidenceThreshold
+          );
+
+          copyMaskToTarget(mask);
+          state.segmentationFps = 1000 / Math.max(1, performance.now() - started);
+        } catch (error) {
+          console.error(error);
+          setStatus("La detección se interrumpió. Reintentando con la siguiente imagen...", "error");
+          await wait(200);
+        }
+
+        const elapsed = performance.now() - started;
+        await wait(Math.max(0, 1000 / 30 - elapsed));
+      }
+    }
+
+    function copyMaskToTarget(mask) {
+      if (!mask) return;
+
+      if (mask.width && mask.height && mask.data) {
+        if (state.maskSourceCanvas.width !== mask.width || state.maskSourceCanvas.height !== mask.height) {
+          state.maskSourceCanvas.width = mask.width;
+          state.maskSourceCanvas.height = mask.height;
+        }
+        state.maskSourceContext.putImageData(mask, 0, 0);
+      } else {
+        const width = video.videoWidth || state.maskWidth;
+        const height = video.videoHeight || state.maskHeight;
+        if (state.maskSourceCanvas.width !== width || state.maskSourceCanvas.height !== height) {
+          state.maskSourceCanvas.width = width;
+          state.maskSourceCanvas.height = height;
+        }
+        state.maskSourceContext.clearRect(0, 0, width, height);
+        state.maskSourceContext.drawImage(mask, 0, 0, width, height);
+      }
+
+      state.maskScaleContext.clearRect(0, 0, state.maskWidth, state.maskHeight);
+      state.maskScaleContext.drawImage(
+        state.maskSourceCanvas,
+        0,
+        0,
+        state.maskWidth,
+        state.maskHeight
+      );
+
+      const pixels = state.maskScaleContext.getImageData(0, 0, state.maskWidth, state.maskHeight).data;
+      for (let i = 0, j = 0; i < state.targetMask.length; i += 1, j += 4) {
+        state.targetMask[i] = pixels[j] / 255;
+      }
+    }
+
+    function renderLoop(now) {
+      if (!state.running) return;
+
+      const deltaSeconds = Math.min(0.05, Math.max(0.001, (now - state.lastFrameTime) / 1000));
+      state.lastFrameTime = now;
+
+      updateSmoothedMask(deltaSeconds);
+      if (now - state.lastGlyphShuffle > 250) {
+        shuffleGlyphs();
+        state.lastGlyphShuffle = now;
+      }
+
+      state.material.uniforms.uTime.value = now / 1000;
+      state.renderer.render(state.scene, state.camera);
+      updateFps(now);
+      requestAnimationFrame(renderLoop);
+    }
+
+    function updateSmoothedMask(deltaSeconds) {
+      const responsiveness = 1 - Math.pow(state.smoothness, deltaSeconds * 60);
+      for (let i = 0; i < state.smoothMask.length; i += 1) {
+        state.smoothMask[i] += (state.targetMask[i] - state.smoothMask[i]) * responsiveness;
+        state.uploadMask[i] = Math.round(state.smoothMask[i] * 255);
+      }
+      state.maskTexture.needsUpdate = true;
+    }
+
+    function updateFps(now) {
+      state.framesSinceFps += 1;
+      const elapsed = now - state.lastFpsUpdate;
+      if (elapsed < 700) return;
+
+      state.renderFps = state.framesSinceFps * 1000 / elapsed;
+      state.framesSinceFps = 0;
+      state.lastFpsUpdate = now;
+      setStatus(
+        `Cámara activa. <strong>${state.renderFps.toFixed(0)} fps</strong> render · ` +
+        `<strong>${state.segmentationFps.toFixed(0)} fps</strong> detección`
+      );
+    }
+
+    function resizeRenderer() {
+      if (!state.renderer || !state.material) return;
+      state.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, state.pixelRatioCap));
+      state.renderer.setSize(window.innerWidth, window.innerHeight, false);
+      state.material.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+    }
+
+    async function shareExperience() {
+      const shareData = {
+        title: "ASCCI",
+        text: "Convierte tu silueta en una señal viva de caracteres ASCII.",
+        url: window.location.href
+      };
+
+      try {
+        if (navigator.share) {
+          await navigator.share(shareData);
+          return;
+        }
+        await navigator.clipboard.writeText(shareData.url);
+        setStatus("Enlace copiado. <strong>Listo para compartir.</strong>");
+      } catch (error) {
+        if (error?.name !== "AbortError") {
+          setStatus("No se pudo compartir automáticamente. Copia la dirección del navegador.", "error");
+        }
+      }
+    }
+
+    let signatureTimer;
+    function revealSignature() {
+      window.clearTimeout(signatureTimer);
+      signatureReveal.classList.add("is-visible");
+      signatureTimer = window.setTimeout(() => {
+        signatureReveal.classList.remove("is-visible");
+      }, 3200);
+    }
+
+    function readableError(error) {
+      const message = error?.message || "";
+      if (message.includes("Permission") || message.includes("denied") || message.includes("NotAllowed")) {
+        return "El navegador bloqueó la cámara. Dale permiso y vuelve a intentarlo.";
+      }
+      if (message.includes("librerías externas")) {
+        return "No se cargaron Three.js o la detección. Revisa tu conexión y recarga la página.";
+      }
+      if (location.protocol === "file:") {
+        return "Abre esta página desde un servidor local, no como archivo directo, para que la cámara funcione.";
+      }
+      return "No se pudo iniciar la experiencia. Revisa permisos de cámara y conexión.";
+    }
+
+    function wait(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
   </script>
 </body>
 </html>
