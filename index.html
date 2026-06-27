@@ -3,34 +3,41 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Retrato WebAR</title>
-    <link rel="stylesheet" href="./webar.css" />
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <title>Retrato plegable con mano</title>
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="hud">
-      <strong>Retrato WebAR</strong>
-      <span id="webar-status">Cargando camara</span>
-      <a href="./webar-marker.html" target="_blank" rel="noreferrer">Abrir marcador</a>
-    </div>
+    <main class="shell">
+      <section class="hero">
+        <div id="scene" class="scene" aria-label="Retrato 3D interactivo"></div>
 
-    <canvas id="hand-canvas" aria-hidden="true"></canvas>
+        <aside class="studio-card" id="work" aria-label="Deteccion de manos">
+          <div class="camera-preview" aria-label="Vista de deteccion de mano">
+            <img
+              id="portrait-preview"
+              src="data:image/gif;base64,R0lGODlhAQABAAAAACw="
+              alt="Foto original del retrato"
+            />
+            <video id="hand-video" autoplay muted playsinline></video>
+            <canvas id="hand-canvas"></canvas>
+            <span id="hand-status">Listo</span>
+          </div>
+          <div class="controls">
+            <button id="start-camera" type="button">Detectar mano</button>
+          </div>
+        </aside>
 
-    <a-scene
-      embedded
-      renderer="alpha: true; antialias: true; logarithmicDepthBuffer: true"
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
-      arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;"
-    >
-      <a-marker id="hiro-marker" preset="hiro" fold-portrait>
-        <a-entity light="type: ambient; intensity: 1.2"></a-entity>
-        <a-entity light="type: directional; intensity: 1.6" position="0 2 1"></a-entity>
-      </a-marker>
-      <a-entity camera></a-entity>
-    </a-scene>
+        <aside class="code-panel" aria-label="Codigo en tiempo real">
+          <div class="code-panel__bar">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <pre><code id="live-code"></code></pre>
+        </aside>
+      </section>
+    </main>
 
-    <script type="module" src="./webar.js"></script>
+    <script type="module" src="./main.js"></script>
   </body>
 </html>
