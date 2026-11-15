@@ -122,7 +122,7 @@ function shader(gl, type, src){
 const wins = [0, 1].map(i => {
   const el = document.getElementById('w' + i);
   const cv = el.querySelector('canvas');
-  const gl = cv.getContext('webgl', {antialias:false, alpha:false, depth:false, stencil:false, powerPreference:'high-performance'});
+  const gl = cv.getContext('webgl', {antialias:false, alpha:false, depth:false, stencil:false, powerPreference:'high-performance', preserveDrawingBuffer:true});
   if (!gl) return null;
   const pr = gl.createProgram();
   gl.attachShader(pr, shader(gl, gl.VERTEX_SHADER, VS));
@@ -366,5 +366,109 @@ requestAnimationFrame(frame);
 })();
 </script>
 
+<style>
+#recBtn{font:600 13px -apple-system,system-ui,sans-serif;color:#f2f3f7;background:rgba(10,12,18,.7);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:8px 12px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);font-variant-numeric:tabular-nums}
+#recBtn i{width:11px;height:11px;border-radius:50%;background:#ff3b30;display:block}
+#recBtn.on{border-color:#ff3b30}
+#recBtn.on i{border-radius:2px;animation:recPulse 1s infinite}
+@keyframes recPulse{50%{opacity:.35}}
+#recSheet{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.6)}
+#recSheet .box{width:min(460px,100%);background:#12141c;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:16px;display:grid;gap:12px;color:#e6e8ef;font:14px -apple-system,system-ui,sans-serif}
+#recSheet video{width:100%;max-height:50vh;border-radius:10px;background:#000}
+#recSheet .row{display:flex;gap:8px;flex-wrap:wrap}
+#recSheet button,#recSheet a{flex:1;min-width:120px;text-align:center;font:600 14px -apple-system,system-ui,sans-serif;padding:11px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#e6e8ef;text-decoration:none;cursor:pointer}
+#recSheet .main{background:linear-gradient(90deg,#3dff9a,#ff2d55);color:#05060a;border:0}
+#recSheet p{margin:0;color:#9aa0b0;font-size:12.5px}
+</style>
+<script>
+/* Grabador: compone la escena en un canvas y la graba con MediaRecorder */
+window.EsferasRec = function(btn, draw){
+  const label = btn.querySelector('span');
+  let rec = null, chunks = [], raf = 0, cv, ctx, t0 = 0, tick = 0, mime = '';
+  const types = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+  function pick(){ if (!window.MediaRecorder) return null; for (const m of types) if (MediaRecorder.isTypeSupported(m)) return m; return ''; }
+  function fmt(s){ return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(Math.floor(s%60)).padStart(2,'0'); }
+  function start(){
+    mime = pick();
+    if (mime === null || !HTMLCanvasElement.prototype.captureStream){ alertBox('Este navegador no permite grabar desde la página. Usa la grabación de pantalla del Centro de control.'); return; }
+    const W = innerWidth, H = innerHeight, s = Math.min(2, 1920 / Math.max(W, H));
+    cv = document.createElement('canvas'); cv.width = Math.round(W * s) & ~1; cv.height = Math.round(H * s) & ~1;
+    ctx = cv.getContext('2d');
+    const loop = () => { ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0); try { draw(ctx, W, H); } catch(e){} raf = requestAnimationFrame(loop); };
+    loop();
+    const stream = cv.captureStream(30);
+    try { rec = new MediaRecorder(stream, mime ? {mimeType: mime, videoBitsPerSecond: 10000000} : undefined); }
+    catch(e){ cancelAnimationFrame(raf); alertBox('No se pudo empezar a grabar en este navegador.'); return; }
+    chunks = [];
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = finish;
+    rec.start(500);
+    t0 = performance.now(); btn.classList.add('on'); label.textContent = 'Detener 00:00';
+    tick = setInterval(() => { label.textContent = 'Detener ' + fmt((performance.now() - t0) / 1000); }, 500);
+  }
+  function stop(){ if (rec && rec.state !== 'inactive') rec.stop(); }
+  function finish(){
+    cancelAnimationFrame(raf); clearInterval(tick); btn.classList.remove('on'); label.textContent = 'Grabar';
+    const type = (rec.mimeType || mime || 'video/mp4').split(';')[0];
+    const ext = type.includes('mp4') ? 'mp4' : 'webm';
+    const blob = new Blob(chunks, {type});
+    const d = new Date(), p = n => String(n).padStart(2, '0');
+    const name = `esferas-gemelas-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.${ext}`;
+    const url = URL.createObjectURL(blob);
+    const file = new File([blob], name, {type});
+    const canShare = navigator.canShare && navigator.canShare({files: [file]});
+    const sheet = document.createElement('div'); sheet.id = 'recSheet';
+    sheet.innerHTML = `<div class="box"><video src="${url}" controls playsinline loop></video>
+      <div class="row">${canShare ? '<button class="main" data-a="share">Guardar en Fotos / Compartir</button>' : ''}
+      <a class="${canShare ? '' : 'main'}" href="${url}" download="${name}">Descargar video</a>
+      <button data-a="close">Cerrar</button></div>
+      <p>${canShare ? 'En el menú, elige “Guardar video” para mandarlo a Fotos.' : 'El video queda en Descargas (app Archivos).'}</p></div>`;
+    document.body.appendChild(sheet);
+    sheet.addEventListener('click', async e => {
+      const a = e.target.dataset && e.target.dataset.a;
+      if (a === 'share'){ try { await navigator.share({files: [file], title: 'Esferas Gemelas'}); } catch(err){} }
+      if (a === 'close' || e.target === sheet){ sheet.remove(); URL.revokeObjectURL(url); }
+    });
+  }
+  function alertBox(msg){
+    const sheet = document.createElement('div'); sheet.id = 'recSheet';
+    sheet.innerHTML = `<div class="box"><p style="color:#e6e8ef;font-size:14px">${msg}</p><div class="row"><button data-a="close">Entendido</button></div></div>`;
+    document.body.appendChild(sheet); sheet.addEventListener('click', () => sheet.remove());
+  }
+  btn.addEventListener('click', e => { e.stopPropagation(); (btn.classList.contains('on') ? stop : start)(); });
+};
+</script>
+
+<button id="recBtn" type="button" style="position:fixed;top:calc(10px + env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));z-index:6000"><i></i><span>Grabar</span></button>
+<script>
+EsferasRec(document.getElementById('recBtn'), function(ctx, W, H){
+  const g = ctx.createRadialGradient(W/2, 0, 0, W/2, 0, Math.max(W, H));
+  g.addColorStop(0, '#151829'); g.addColorStop(0.7, '#090a10'); g.addColorStop(1, '#090a10');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const wins = [...document.querySelectorAll('.win')].sort((a, b) => (+a.style.zIndex || 0) - (+b.style.zIndex || 0));
+  for (const el of wins){
+    const r = el.getBoundingClientRect(), x = r.left, y = r.top, w = r.width, h = r.height, rad = 12;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x + rad, y); ctx.arcTo(x + w, y, x + w, y + h, rad); ctx.arcTo(x + w, y + h, x, y + h, rad);
+    ctx.arcTo(x, y + h, x, y, rad); ctx.arcTo(x, y, x + w, y, rad); ctx.closePath();
+    ctx.fillStyle = '#05060a'; ctx.fill(); ctx.clip();
+    ctx.fillStyle = '#1a1c24'; ctx.fillRect(x, y, w, 34);
+    const front = el.classList.contains('front');
+    ['#ff5f57', '#febc2e', '#28c840'].forEach((c, i) => { ctx.fillStyle = front ? c : '#3a3d48'; ctx.beginPath(); ctx.arc(x + 15 + i * 16, y + 17, 5, 0, Math.PI * 2); ctx.fill(); });
+    ctx.fillStyle = '#0e1016'; ctx.fillRect(x + 64, y + 7, w - 96, 20);
+    ctx.fillStyle = '#c9ccd8'; ctx.font = '11.5px ui-monospace, Menlo, monospace'; ctx.textBaseline = 'middle';
+    const url = el.querySelector('.url'); ctx.fillText(url ? url.textContent : '', x + 73, y + 17);
+    const tag = el.querySelector('.tag'); ctx.fillStyle = tag ? getComputedStyle(tag).backgroundColor : '#fff';
+    ctx.beginPath(); ctx.arc(x + w - 16, y + 17, 4, 0, Math.PI * 2); ctx.fill();
+    const c = el.querySelector('canvas'); ctx.drawImage(c, x + 1, y + 35, w - 2, h - 36);
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,.09)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  const pct = document.getElementById('pct');
+  ctx.fillStyle = '#8d92a3'; ctx.font = '11px ui-monospace, Menlo, monospace'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText('FUSIÓN ' + (pct ? pct.textContent : ''), 16, H - 18);
+});
+</script>
 </body>
 </html>

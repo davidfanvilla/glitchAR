@@ -33,6 +33,7 @@ html,body{height:100%;margin:0;background:#000;color:var(--ink);font-family:var(
 <div id="meter">FUSIÓN <span id="pct">0%</span></div>
 <div id="msg">Arrastra cada esfera con el dedo · mueve el teléfono y se quedan en su lugar</div>
 <div class="ui">
+  <button id="recBtn" type="button"><i></i><span>Grabar</span></button>
   <button id="dark" type="button" aria-pressed="true">Oscurecer fondo</button>
   <button id="recenter" type="button">Centrar</button>
   <button id="bigger" type="button">Más grandes</button>
@@ -56,7 +57,7 @@ const COL = [[0.24, 1.0, 0.56], [1.0, 0.16, 0.33]];
 
 /* ---------- WebGL transparente sobre la cámara ---------- */
 const cv = document.getElementById('gl');
-const gl = cv.getContext('webgl', {alpha:true, premultipliedAlpha:true, antialias:false, depth:false});
+const gl = cv.getContext('webgl', {alpha:true, premultipliedAlpha:true, antialias:false, depth:false, preserveDrawingBuffer:true});
 const VS = `attribute vec2 aXY; attribute float aSize; attribute vec4 aCol;
 uniform vec2 uRes; uniform float uDpr; varying vec4 vCol;
 void main(){ vec2 p = aXY / uRes * 2.0 - 1.0; gl_Position = vec4(p.x, -p.y, 0.0, 1.0); gl_PointSize = aSize * uDpr; vCol = aCol; }`;
@@ -269,6 +270,94 @@ document.getElementById('go').onclick = async () => {
   requestAnimationFrame(frame);
 };
 })();
+</script>
+<style>
+#recBtn{font:600 13px -apple-system,system-ui,sans-serif;color:#f2f3f7;background:rgba(10,12,18,.7);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:8px 12px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);font-variant-numeric:tabular-nums}
+#recBtn i{width:11px;height:11px;border-radius:50%;background:#ff3b30;display:block}
+#recBtn.on{border-color:#ff3b30}
+#recBtn.on i{border-radius:2px;animation:recPulse 1s infinite}
+@keyframes recPulse{50%{opacity:.35}}
+#recSheet{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.6)}
+#recSheet .box{width:min(460px,100%);background:#12141c;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:16px;display:grid;gap:12px;color:#e6e8ef;font:14px -apple-system,system-ui,sans-serif}
+#recSheet video{width:100%;max-height:50vh;border-radius:10px;background:#000}
+#recSheet .row{display:flex;gap:8px;flex-wrap:wrap}
+#recSheet button,#recSheet a{flex:1;min-width:120px;text-align:center;font:600 14px -apple-system,system-ui,sans-serif;padding:11px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#e6e8ef;text-decoration:none;cursor:pointer}
+#recSheet .main{background:linear-gradient(90deg,#3dff9a,#ff2d55);color:#05060a;border:0}
+#recSheet p{margin:0;color:#9aa0b0;font-size:12.5px}
+</style>
+<script>
+/* Grabador: compone la escena en un canvas y la graba con MediaRecorder */
+window.EsferasRec = function(btn, draw){
+  const label = btn.querySelector('span');
+  let rec = null, chunks = [], raf = 0, cv, ctx, t0 = 0, tick = 0, mime = '';
+  const types = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+  function pick(){ if (!window.MediaRecorder) return null; for (const m of types) if (MediaRecorder.isTypeSupported(m)) return m; return ''; }
+  function fmt(s){ return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(Math.floor(s%60)).padStart(2,'0'); }
+  function start(){
+    mime = pick();
+    if (mime === null || !HTMLCanvasElement.prototype.captureStream){ alertBox('Este navegador no permite grabar desde la página. Usa la grabación de pantalla del Centro de control.'); return; }
+    const W = innerWidth, H = innerHeight, s = Math.min(2, 1920 / Math.max(W, H));
+    cv = document.createElement('canvas'); cv.width = Math.round(W * s) & ~1; cv.height = Math.round(H * s) & ~1;
+    ctx = cv.getContext('2d');
+    const loop = () => { ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0); try { draw(ctx, W, H); } catch(e){} raf = requestAnimationFrame(loop); };
+    loop();
+    const stream = cv.captureStream(30);
+    try { rec = new MediaRecorder(stream, mime ? {mimeType: mime, videoBitsPerSecond: 10000000} : undefined); }
+    catch(e){ cancelAnimationFrame(raf); alertBox('No se pudo empezar a grabar en este navegador.'); return; }
+    chunks = [];
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = finish;
+    rec.start(500);
+    t0 = performance.now(); btn.classList.add('on'); label.textContent = 'Detener 00:00';
+    tick = setInterval(() => { label.textContent = 'Detener ' + fmt((performance.now() - t0) / 1000); }, 500);
+  }
+  function stop(){ if (rec && rec.state !== 'inactive') rec.stop(); }
+  function finish(){
+    cancelAnimationFrame(raf); clearInterval(tick); btn.classList.remove('on'); label.textContent = 'Grabar';
+    const type = (rec.mimeType || mime || 'video/mp4').split(';')[0];
+    const ext = type.includes('mp4') ? 'mp4' : 'webm';
+    const blob = new Blob(chunks, {type});
+    const d = new Date(), p = n => String(n).padStart(2, '0');
+    const name = `esferas-gemelas-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.${ext}`;
+    const url = URL.createObjectURL(blob);
+    const file = new File([blob], name, {type});
+    const canShare = navigator.canShare && navigator.canShare({files: [file]});
+    const sheet = document.createElement('div'); sheet.id = 'recSheet';
+    sheet.innerHTML = `<div class="box"><video src="${url}" controls playsinline loop></video>
+      <div class="row">${canShare ? '<button class="main" data-a="share">Guardar en Fotos / Compartir</button>' : ''}
+      <a class="${canShare ? '' : 'main'}" href="${url}" download="${name}">Descargar video</a>
+      <button data-a="close">Cerrar</button></div>
+      <p>${canShare ? 'En el menú, elige “Guardar video” para mandarlo a Fotos.' : 'El video queda en Descargas (app Archivos).'}</p></div>`;
+    document.body.appendChild(sheet);
+    sheet.addEventListener('click', async e => {
+      const a = e.target.dataset && e.target.dataset.a;
+      if (a === 'share'){ try { await navigator.share({files: [file], title: 'Esferas Gemelas'}); } catch(err){} }
+      if (a === 'close' || e.target === sheet){ sheet.remove(); URL.revokeObjectURL(url); }
+    });
+  }
+  function alertBox(msg){
+    const sheet = document.createElement('div'); sheet.id = 'recSheet';
+    sheet.innerHTML = `<div class="box"><p style="color:#e6e8ef;font-size:14px">${msg}</p><div class="row"><button data-a="close">Entendido</button></div></div>`;
+    document.body.appendChild(sheet); sheet.addEventListener('click', () => sheet.remove());
+  }
+  btn.addEventListener('click', e => { e.stopPropagation(); (btn.classList.contains('on') ? stop : start)(); });
+};
+</script>
+
+<script>
+EsferasRec(document.getElementById('recBtn'), function(ctx, W, H){
+  const cam = document.getElementById('cam'), gl = document.getElementById('gl');
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  if (cam.videoWidth){
+    const k = Math.max(W / cam.videoWidth, H / cam.videoHeight), dw = cam.videoWidth * k, dh = cam.videoHeight * k;
+    ctx.drawImage(cam, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  }
+  if (document.getElementById('dark').getAttribute('aria-pressed') === 'true'){ ctx.fillStyle = 'rgba(0,0,0,.58)'; ctx.fillRect(0, 0, W, H); }
+  ctx.drawImage(gl, 0, 0, W, H);
+  const pct = document.getElementById('pct');
+  ctx.fillStyle = 'rgba(230,232,239,.85)'; ctx.font = '11px ui-monospace, Menlo, monospace';
+  ctx.fillText('FUSIÓN ' + (pct ? pct.textContent : ''), 16, 28);
+});
 </script>
 </body>
 </html>
