@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Esferas Gemelas AR</title>
+<style>
+:root{--ink:#e6e8ef;--dim:#9aa0b0;--green:#3dff9a;--red:#ff2d55;--glass:rgba(10,12,18,.62);--edge:rgba(255,255,255,.12);
+  --sans:-apple-system,"SF Pro Text",system-ui,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace;color-scheme:dark}
+html,body{height:100%;margin:0;background:#000;color:var(--ink);font-family:var(--sans);overflow:hidden;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
+#cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;transition:filter .3s}
+#gl{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+#start{position:fixed;inset:0;display:grid;place-items:center;padding:24px;background:radial-gradient(90% 70% at 50% 40%,#151829,#05060a);z-index:10;text-align:center}
+#start h1{font-size:28px;margin:0 0 8px;letter-spacing:-.01em}
+#start p{color:var(--dim);margin:0 auto 22px;max-width:30ch;line-height:1.45}
+.go{font:600 16px var(--sans);color:#05060a;background:linear-gradient(90deg,var(--green),var(--red));border:0;border-radius:14px;padding:14px 26px;cursor:pointer}
+.ui{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
+  padding:10px max(16px,env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.ui button{font:500 13px var(--sans);color:var(--ink);background:var(--glass);border:1px solid var(--edge);border-radius:10px;padding:9px 12px;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.ui button[aria-pressed="true"]{border-color:var(--green)}
+#meter{position:fixed;top:calc(12px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:5;font:11px var(--mono);letter-spacing:.08em;
+  color:var(--dim);background:var(--glass);border:1px solid var(--edge);border-radius:20px;padding:6px 12px;font-variant-numeric:tabular-nums}
+#msg{position:fixed;top:calc(52px + env(safe-area-inset-top));left:16px;right:16px;text-align:center;z-index:5;font-size:13px;color:var(--dim)}
+</style>
+</head>
+<body>
+<video id="cam" playsinline muted autoplay></video>
+<canvas id="gl"></canvas>
+<div id="meter">FUSIÓN <span id="pct">0%</span></div>
+<div id="msg">Arrastra cada esfera con el dedo · mueve el teléfono y se quedan en su lugar</div>
+<div class="ui">
+  <button id="dark" type="button" aria-pressed="true">Oscurecer fondo</button>
+  <button id="recenter" type="button">Centrar</button>
+  <button id="bigger" type="button">Más grandes</button>
+  <button id="smaller" type="button">Más chicas</button>
+</div>
+<div id="start">
+  <div>
+    <h1>Esferas Gemelas AR</h1>
+    <p>Usa la cámara trasera y los sensores de movimiento. Arrastra cada esfera y júntalas para fusionarlas.</p>
+    <button class="go" id="go" type="button">Iniciar cámara</button>
+    <p id="err" style="margin-top:18px;color:var(--red)"></p>
+  </div>
+</div>
+<script>
+(function(){
+const DPR = Math.min(2, window.devicePixelRatio || 1);
+const MOT = 1;
+const N = 3600, M = N * 2, BP = 1200, DU = 0, T = M + BP;
+const GAIN = Math.sqrt(5200 / N) * 1.15;
+const COL = [[0.24, 1.0, 0.56], [1.0, 0.16, 0.33]];
+
+/* ---------- WebGL transparente sobre la cámara ---------- */
+const cv = document.getElementById('gl');
+const gl = cv.getContext('webgl', {alpha:true, premultipliedAlpha:true, antialias:false, depth:false});
+const VS = `attribute vec2 aXY; attribute float aSize; attribute vec4 aCol;
+uniform vec2 uRes; uniform float uDpr; varying vec4 vCol;
+void main(){ vec2 p = aXY / uRes * 2.0 - 1.0; gl_Position = vec4(p.x, -p.y, 0.0, 1.0); gl_PointSize = aSize * uDpr; vCol = aCol; }`;
+const FS = `precision mediump float; varying vec4 vCol;
+void main(){ vec2 p = gl_PointCoord - 0.5; float d = dot(p,p); if (d > 0.25) discard;
+  float a = exp(-d * 14.0) * vCol.a; gl_FragColor = vec4(vCol.rgb * a, a * 0.6); }`;
+function sh(type, src){ const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS));
+gl.linkProgram(pr); gl.useProgram(pr);
+const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+[['aXY',2,0],['aSize',1,8],['aCol',4,12]].forEach(([n,s,o]) => { const l = gl.getAttribLocation(pr, n); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, s, gl.FLOAT, false, 28, o); });
+const uRes = gl.getUniformLocation(pr, 'uRes'), uDpr = gl.getUniformLocation(pr, 'uDpr');
+gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); gl.clearColor(0, 0, 0, 0);
+let W = 0, H = 0;
+function resize(){ W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); gl.viewport(0, 0, cv.width, cv.height); }
+addEventListener('resize', resize); resize();
+
+/* ---------- Anclaje con giroscopio (3DOF) ---------- */
+let yaw = 0, pitch = 0, yaw0 = null, pitch0 = 0, offX = 0, offY = 0, sOffX = 0, sOffY = 0;
+function onOri(e){
+  if (e.alpha == null) return;
+  const a = e.alpha;
+  if (yaw0 === null){ yaw0 = a; pitch0 = e.beta; }
+  let dy = a - yaw0; while (dy > 180) dy -= 360; while (dy < -180) dy += 360;
+  yaw = dy; pitch = e.beta - pitch0;
+}
+function pxPerDeg(){ return Math.max(W, H) / 62; }
+
+/* ---------- Esferas: posición en el mundo, arrastre y tamaño ---------- */
+const S = [{wx:0, wy:0}, {wx:0, wy:0}];
+let scale = 1;
+function center(){
+  offX = yaw * pxPerDeg(); offY = pitch * pxPerDeg();
+  const land = W > H;
+  S[0].wx = (land ? W * 0.27 : W * 0.5) - offX; S[0].wy = (land ? H * 0.5 : H * 0.3) - offY;
+  S[1].wx = (land ? W * 0.73 : W * 0.5) - offX; S[1].wy = (land ? H * 0.5 : H * 0.7) - offY;
+}
+center();
+let drag = null;
+cv.addEventListener('pointerdown', e => {
+  let best = -1, bd = 1e9;
+  for (let s = 0; s < 2; s++){ const d = Math.hypot(e.clientX - C[s][0], e.clientY - C[s][1]); if (d < bd){ bd = d; best = s; } }
+  if (bd < R[best] * 1.8){ drag = {s:best, id:e.pointerId, dx:e.clientX - C[best][0], dy:e.clientY - C[best][1]}; cv.setPointerCapture(e.pointerId); }
+});
+cv.addEventListener('pointermove', e => {
+  if (!drag || drag.id !== e.pointerId) return;
+  S[drag.s].wx = e.clientX - drag.dx - sOffX; S[drag.s].wy = e.clientY - drag.dy - sOffY;
+});
+const end = () => { drag = null; };
+cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+document.getElementById('recenter').onclick = () => { yaw0 = null; yaw = pitch = 0; sOffX = sOffY = 0; center(); };
+document.getElementById('bigger').onclick = () => { scale = Math.min(2.2, scale * 1.2); };
+document.getElementById('smaller').onclick = () => { scale = Math.max(0.45, scale / 1.2); };
+const cam = document.getElementById('cam'), darkBtn = document.getElementById('dark');
+function setDark(on){ darkBtn.setAttribute('aria-pressed', on); cam.style.filter = on ? 'brightness(.42) saturate(.8)' : 'none'; }
+darkBtn.onclick = () => setDark(darkBtn.getAttribute('aria-pressed') !== 'true'); setDark(true);
+
+/* ---------- Partículas (mismo motor que la versión de ventanas) ---------- */
+/* ---------- Partículas ---------- */
+const th = new Float32Array(T), ph = new Float32Array(T), sp = new Float32Array(T), sd = new Float32Array(T);
+const rj = new Float32Array(T), cf = new Float32Array(T), bw = new Float32Array(T), vel = new Float32Array(T);
+const ab = new Float32Array(T), sz = new Float32Array(T), u = new Float32Array(T), tm = new Float32Array(T);
+const px = new Float32Array(T), py = new Float32Array(T);
+const hm = new Uint8Array(T), st = new Uint8Array(T);
+const bu = new Float32Array(BP), bs = new Float32Array(BP), bd = new Int8Array(BP);
+const dx_ = new Float32Array(DU), dy_ = new Float32Array(DU);
+const data = new Float32Array(T * 7);
+
+for (let i = 0; i < T; i++){
+  hm[i] = i < N ? 0 : 1;
+  th[i] = Math.random() * Math.PI * 2;
+  ph[i] = Math.acos(2 * Math.random() - 1);
+  sp[i] = 0.12 + Math.random() * 0.28;
+  sd[i] = Math.random() * Math.PI * 2;
+  bw[i] = Math.sqrt(Math.random());
+  vel[i] = 160 + Math.random() * 160;
+  cf[i] = 0.32 + Math.random() * 0.26;
+  if (Math.random() < 0.78){ rj[i] = 0.93 + Math.random() * 0.11; sz[i] = 2.2 + Math.random() * 1.4; ab[i] = 0.32 * GAIN; }
+  else { rj[i] = 0.2 + Math.random() * 0.7; sz[i] = 1.6 + Math.random() * 1.0; ab[i] = 0.22 * GAIN; }
+}
+for (let j = 0; j < BP; j++){ bu[j] = Math.random(); bs[j] = 0.12 + Math.random() * 0.22; bd[j] = Math.random() < 0.5 ? 1 : -1; }
+
+const C = [[0,0],[0,0]], R = [0,0];
+let SX = 0, SY = 0, SZ = 0, t = 0, fs = 0, last = performance.now(), dirX = 1, dirY = 0, D = 1;
+const CT = Math.cos(0.42), ST = Math.sin(0.42);
+let PC = 1, PS = 0;
+
+function sphere(s, rf, i){
+  const p = ph[i] + 0.12 * Math.sin(t * 0.6 + sd[i]);
+  const sp_ = Math.sin(p);
+  const x = sp_ * Math.cos(th[i]), y = Math.cos(p), z = sp_ * Math.sin(th[i]);
+  const y2 = y * CT - z * ST, z2 = y * ST + z * CT;
+  const x3 = x * PC + z2 * PS, z3 = -x * PS + z2 * PC;
+  let r = R[s] * rf * (1 + 0.035 * Math.sin(t * 1.4 + sd[i] * 3));
+  if (fs > 0.001){
+    const ox = s === 0 ? dirX : -dirX, oy = s === 0 ? dirY : -dirY;
+    const dot = x3 * ox + y2 * oy;
+    if (dot > 0){ const d2 = dot * dot; r *= 1 + fs * 0.38 * d2 * d2; }
+  }
+  SX = C[s][0] + x3 * r; SY = C[s][1] + y2 * r; SZ = z3;
+}
+function bridge(a, b, e, i){
+  const ax = C[a][0], ay = C[a][1], bx = C[b][0], by = C[b][1];
+  const lx = bx - ax, ly = by - ay, L = Math.max(1, Math.hypot(lx, ly));
+  const nx = -ly / L, ny = lx / L;
+  const neck = 0.12 + 0.38 * fs;
+  const w = ((1 - e) * R[a] * 0.8 + e * R[b] * 0.7) * (neck + (1 - neck) * Math.pow(Math.abs(2 * e - 1), 2.2)) * (0.7 + 0.6 * fs);
+  const ang = sd[i] * 2 + t * 0.9 + e * 5;
+  const lat = Math.cos(ang) * bw[i] * w + Math.sin(e * 8 - t * 2.5 + sd[i]) * w * 0.12;
+  SX = ax + lx * e + nx * lat; SY = ay + ly * e + ny * lat; SZ = Math.sin(ang);
+}
+
+const pctEl = document.getElementById('pct');
+let shown = -1;
+
+function frame(now){
+  const dt = Math.min(0.05, (now - last) / 1000 || 0.016); last = now;
+  t += dt * MOT;
+  PC = Math.cos(t * 0.12); PS = Math.sin(t * 0.12);
+  offX = yaw * pxPerDeg(); offY = pitch * pxPerDeg();
+  const kk = 1 - Math.exp(-dt * 10); sOffX += (offX - sOffX) * kk; sOffY += (offY - sOffY) * kk;
+  const base = 0.17 * Math.min(W, H) * scale;
+  for (let s = 0; s < 2; s++){ C[s][0] = S[s].wx + sOffX; C[s][1] = S[s].wy + sOffY; R[s] = base; }
+  const lx = C[1][0] - C[0][0], ly = C[1][1] - C[0][1];
+  D = Math.max(1, Math.hypot(lx, ly)); dirX = lx / D; dirY = ly / D;
+  const Rm = base, far = Rm * 3.8, near = Rm * 2.0;
+  const fT = Math.max(0, Math.min(1, (far - D) / (far - near)));
+  fs += (fT - fs) * Math.min(1, dt * (fT < fs ? 6 : 3));
+  const split = fT === 0 && fs < 0.05;
+  const k = 1 - Math.exp(-dt * 12);
+  let o = 0;
+
+  for (let i = 0; i < M; i++){
+    const h = hm[i], ot = 1 - h;
+    th[i] += sp[i] * dt * MOT * (1 + 0.6 * Math.sin(ph[i] * 4 + sd[i]));
+    let onSphere = true;
+    switch (st[i]){
+      case 0:
+        sphere(h, rj[i], i);
+        if (fs > 0.02 && Math.random() < fs * dt * 0.2){ st[i] = 1; u[i] = 0; }
+        break;
+      case 1:
+        if (split){ st[i] = 0; sphere(h, rj[i], i); break; }
+        u[i] += dt * MOT * vel[i] / Math.max(D, 40);
+        if (u[i] >= 1){ u[i] = 1; st[i] = 2; tm[i] = 3 + Math.random() * 6; }
+        bridge(h, ot, u[i], i); onSphere = false;
+        break;
+      case 2:
+        if (split){ st[i] = 0; sphere(h, rj[i], i); break; }
+        sphere(ot, cf[i], i);
+        tm[i] -= dt * (fs > 0.03 ? 1 : 5);
+        if (tm[i] <= 0){ st[i] = 3; u[i] = 1; }
+        break;
+      default:
+        if (split){ st[i] = 0; sphere(h, rj[i], i); break; }
+        u[i] -= dt * MOT * vel[i] / Math.max(D, 40);
+        if (u[i] <= 0){ u[i] = 0; st[i] = 0; }
+        bridge(h, ot, u[i], i); onSphere = false;
+    }
+    let a;
+    if (onSphere){
+      const fr = (SZ + 1) * 0.5, rim = 1 - Math.abs(SZ);
+      a = ab[i] * (0.45 + 0.6 * fr + 1.6 * rim * rim * rim);
+    } else a = ab[i] * 1.4 * (0.55 + 0.45 * SZ);
+    px[i] += (SX - px[i]) * k; py[i] += (SY - py[i]) * k;
+    const c = COL[h];
+    data[o] = px[i]; data[o+1] = py[i]; data[o+2] = sz[i];
+    data[o+3] = c[0]; data[o+4] = c[1]; data[o+5] = c[2]; data[o+6] = a; o += 7;
+  }
+
+  for (let j = 0; j < BP; j++){
+    const i = M + j;
+    let e = (bu[j] + t * bs[j]) % 1; if (bd[j] < 0) e = 1 - e;
+    let a = 0, s = 0;
+    if (fs > 0.004){
+      bridge(0, 1, e, i);
+      const edge = Math.min(1, e / 0.12) * Math.min(1, (1 - e) / 0.12);
+      a = fs * 0.34 * GAIN * edge * (0.6 + 0.4 * SZ); s = 2.0 + 1.2 * fs;
+    }
+    data[o] = SX; data[o+1] = SY; data[o+2] = s;
+    data[o+3] = COL[0][0] + (COL[1][0] - COL[0][0]) * e;
+    data[o+4] = COL[0][1] + (COL[1][1] - COL[0][1]) * e;
+    data[o+5] = COL[0][2] + (COL[1][2] - COL[0][2]) * e;
+    data[o+6] = a; o += 7;
+  }
+
+  gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+  gl.uniform2f(uRes, W, H); gl.uniform1f(uDpr, DPR);
+  gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.POINTS, 0, T);
+  const p = Math.round(fs * 100); if (p !== shown){ shown = p; pctEl.textContent = p + '%'; }
+  requestAnimationFrame(frame);
+}
+
+/* ---------- Inicio: permisos de cámara y movimiento (requieren un toque en iOS) ---------- */
+document.getElementById('go').onclick = async () => {
+  const err = document.getElementById('err');
+  try {
+    if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission){
+      const r = await DeviceOrientationEvent.requestPermission(); if (r === 'granted') addEventListener('deviceorientation', onOri);
+    } else addEventListener('deviceorientation', onOri);
+  } catch(e){}
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}, audio:false});
+    cam.srcObject = stream; await cam.play();
+  } catch(e){
+    err.textContent = 'No se pudo abrir la cámara. Revisa que la página esté en https y que Safari tenga permiso de cámara.';
+    return;
+  }
+  document.getElementById('start').hidden = true;
+  requestAnimationFrame(frame);
+};
+})();
+</script>
+</body>
+</html>

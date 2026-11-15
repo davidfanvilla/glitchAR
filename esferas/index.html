@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Esferas Gemelas</title>
+<style>
+/* Layout: escritorio oscuro a pantalla completa con dos "ventanas de navegador" arrastrables; cada ventana dibuja el mismo mundo de partículas desde su posición. */
+:root{
+  --desk:#090a10; --desk-2:#151829; --win:#05060a; --bar:#1a1c24; --bar-fg:#8d92a3;
+  --url:#0e1016; --edge:rgba(255,255,255,.09); --green:#3dff9a; --red:#ff2d55; --ink:#c9ccd8;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,"SF Pro Text",system-ui,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;background:var(--desk);color:var(--ink);overflow:hidden;font-family:var(--sans);
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
+#stage{position:fixed;inset:0;overflow:hidden;
+  background:radial-gradient(120% 80% at 50% 0%,var(--desk-2),var(--desk) 70%)}
+.win{position:absolute;left:0;top:0;border-radius:12px;overflow:hidden;background:var(--win);
+  border:1px solid var(--edge);box-shadow:0 24px 60px rgba(0,0,0,.55),0 2px 8px rgba(0,0,0,.4);
+  touch-action:none;will-change:transform;cursor:grab}
+.win.drag{cursor:grabbing;box-shadow:0 30px 80px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.14)}
+.bar{height:34px;display:flex;align-items:center;gap:10px;padding:0 10px;background:var(--bar);
+  border-bottom:1px solid var(--edge)}
+.dots{display:flex;gap:6px;flex:none}
+.dots i{width:10px;height:10px;border-radius:50%;background:#3a3d48;display:block}
+.win.front .dots i:nth-child(1){background:#ff5f57}
+.win.front .dots i:nth-child(2){background:#febc2e}
+.win.front .dots i:nth-child(3){background:#28c840}
+.url{flex:1;min-width:0;background:var(--url);border-radius:6px;padding:4px 9px;font:11.5px/1.3 var(--mono);
+  color:var(--bar-fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.url b{font-weight:500;color:var(--ink)}
+.tag{flex:none;width:8px;height:8px;border-radius:50%}
+canvas{display:block;width:100%;height:calc(100% - 35px)}
+#hud{position:fixed;left:0;right:0;bottom:0;z-index:5000;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));padding-top:8px;pointer-events:none}
+.meter{display:flex;align-items:center;gap:10px;font:11px/1 var(--mono);letter-spacing:.08em;color:var(--bar-fg)}
+.track{width:84px;height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden}
+.fill{height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--red))}
+#pct{color:var(--ink);font-variant-numeric:tabular-nums;min-width:3.2em}
+#hint{font-size:12.5px;color:var(--bar-fg);text-align:center;flex:1;min-width:0;transition:opacity .4s}
+#reset{pointer-events:auto;font:500 12px var(--sans);color:var(--ink);background:rgba(255,255,255,.07);
+  border:1px solid var(--edge);border-radius:8px;padding:8px 12px;cursor:pointer}
+#reset:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+#err{position:fixed;inset:0;display:grid;place-items:center;padding:24px;text-align:center;font-size:15px}
+@media (max-width:520px){#hint{display:none}}
+</style>
+</head>
+<body>
+<a href="ar.html" style="position:fixed;top:calc(10px + env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));z-index:6000;font:600 12px -apple-system,system-ui,sans-serif;color:#05060a;background:linear-gradient(90deg,#3dff9a,#ff2d55);padding:8px 12px;border-radius:9px;text-decoration:none">Ver en AR</a>
+<a rel="ar" href="esferas-gemelas.usdz" style="position:fixed;top:calc(10px + env(safe-area-inset-top));right:calc(max(14px,env(safe-area-inset-right)) + 96px);z-index:6000;font:500 12px -apple-system,system-ui,sans-serif;color:#c9ccd8;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);padding:7px 11px;border-radius:9px;text-decoration:none"><img alt="" width="1" height="1" style="display:none">USDZ</a>
+
+
+<div id="stage">
+  <div class="win" id="w0">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span>
+      <span class="url"><b>esferas.local</b>/?i=0</span><span class="tag" style="background:var(--green)"></span></div>
+    <canvas aria-label="Esfera verde de partículas"></canvas>
+  </div>
+  <div class="win" id="w1">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span>
+      <span class="url"><b>esferas.local</b>/?i=1</span><span class="tag" style="background:var(--red)"></span></div>
+    <canvas aria-label="Esfera roja de partículas"></canvas>
+  </div>
+</div>
+
+<div id="hud">
+  <div class="meter"><span>FUSIÓN</span><span class="track"><span class="fill" id="fill"></span></span><span id="pct">0%</span></div>
+  <div id="hint">Arrastra una ventana hacia la otra</div>
+  <button id="reset" type="button">Separar</button>
+</div>
+<div id="err" hidden>Este dispositivo no pudo iniciar WebGL. Prueba en Safari o Chrome actualizados.</div>
+
+<script>
+(function(){
+const BAR = 35;
+const DPR = Math.min(2, window.devicePixelRatio || 1);
+const SMALL = Math.min(innerWidth, innerHeight) < 600;
+const MOT = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0.4 : 1;
+
+const N  = SMALL ? 3200 : 5200;   // partículas por esfera
+const M  = N * 2;
+const BP = SMALL ? 900 : 1500;    // hebras del puente
+const DU = 140;                   // polvo de fondo
+const T  = M + BP + DU;
+const GAIN = Math.sqrt(5200 / N);
+
+const COL = [[0.24, 1.0, 0.56], [1.0, 0.16, 0.33]];
+
+/* ---------- WebGL por ventana ---------- */
+const VS = `
+attribute vec2 aXY; attribute float aSize; attribute vec4 aCol;
+uniform vec2 uRes; uniform vec2 uOff; uniform float uDpr;
+varying vec4 vCol;
+void main(){
+  vec2 p = (aXY - uOff) / uRes * 2.0 - 1.0;
+  gl_Position = vec4(p.x, -p.y, 0.0, 1.0);
+  gl_PointSize = aSize * uDpr;
+  vCol = aCol;
+}`;
+const FS = `
+precision mediump float;
+varying vec4 vCol;
+void main(){
+  vec2 p = gl_PointCoord - 0.5;
+  float d = dot(p, p);
+  if (d > 0.25) discard;
+  float a = exp(-d * 14.0);
+  gl_FragColor = vec4(vCol.rgb * vCol.a * a, 1.0);
+}`;
+
+function shader(gl, type, src){
+  const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+
+const wins = [0, 1].map(i => {
+  const el = document.getElementById('w' + i);
+  const cv = el.querySelector('canvas');
+  const gl = cv.getContext('webgl', {antialias:false, alpha:false, depth:false, stencil:false, powerPreference:'high-performance'});
+  if (!gl) return null;
+  const pr = gl.createProgram();
+  gl.attachShader(pr, shader(gl, gl.VERTEX_SHADER, VS));
+  gl.attachShader(pr, shader(gl, gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(pr); gl.useProgram(pr);
+  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  const st = 28;
+  const aXY = gl.getAttribLocation(pr, 'aXY'), aS = gl.getAttribLocation(pr, 'aSize'), aC = gl.getAttribLocation(pr, 'aCol');
+  gl.enableVertexAttribArray(aXY); gl.vertexAttribPointer(aXY, 2, gl.FLOAT, false, st, 0);
+  gl.enableVertexAttribArray(aS);  gl.vertexAttribPointer(aS, 1, gl.FLOAT, false, st, 8);
+  gl.enableVertexAttribArray(aC);  gl.vertexAttribPointer(aC, 4, gl.FLOAT, false, st, 12);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+  gl.clearColor(0.02, 0.024, 0.04, 1);
+  return { el, cv, gl, buf,
+    uRes: gl.getUniformLocation(pr, 'uRes'), uOff: gl.getUniformLocation(pr, 'uOff'), uDpr: gl.getUniformLocation(pr, 'uDpr'),
+    x:0, y:0, w:0, h:0, cw:0, ch:0 };
+});
+if (!wins[0] || !wins[1]) { document.getElementById('err').hidden = false; return; }
+
+/* ---------- Ventanas: posición, tamaño y arrastre ---------- */
+let zTop = 10;
+function front(w){
+  w.el.style.zIndex = ++zTop;
+  wins.forEach(o => o.el.classList.toggle('front', o === w));
+}
+function place(w){
+  w.el.style.transform = `translate3d(${w.x}px,${w.y}px,0)`;
+  w.el.style.width = w.w + 'px'; w.el.style.height = w.h + 'px';
+  const cw = w.w - 2, ch = w.h - BAR - 2;
+  if (cw !== w.cw || ch !== w.ch){
+    w.cw = cw; w.ch = ch;
+    w.cv.width = Math.round(cw * DPR); w.cv.height = Math.round(ch * DPR);
+    w.gl.viewport(0, 0, w.cv.width, w.cv.height);
+  }
+}
+function layout(){
+  const W = innerWidth, H = innerHeight, top = Math.max(H * 0.06, 52);
+  const [a, b] = wins;
+  if (W > H * 1.05){
+    const ww = Math.min(W * 0.45, 660), wh = Math.min(H - top - 80, ww * 1.05);
+    a.w = b.w = ww; a.h = b.h = wh;
+    a.x = W * 0.03; a.y = top;
+    b.x = W - ww - W * 0.03; b.y = top + Math.min(40, H * 0.05);
+  } else {
+    const ww = W * 0.86, wh = Math.min((H - top - 78) * 0.5 - 6, ww * 1.05);
+    a.w = b.w = ww; a.h = b.h = wh;
+    a.x = W * 0.03; a.y = top;
+    b.x = W - ww - W * 0.03; b.y = H - 78 - wh;
+  }
+  wins.forEach(place);
+}
+function clamp(w){
+  const W = innerWidth, H = innerHeight;
+  w.x = Math.max(-w.w + 90, Math.min(W - 90, w.x));
+  w.y = Math.max(0, Math.min(H - BAR - 10, w.y));
+}
+
+let drag = null, interacted = false;
+wins.forEach(w => {
+  w.el.addEventListener('pointerdown', e => {
+    front(w);
+    drag = { w, id: e.pointerId, dx: e.clientX - w.x, dy: e.clientY - w.y };
+    w.el.setPointerCapture(e.pointerId); w.el.classList.add('drag');
+    e.preventDefault();
+  });
+  w.el.addEventListener('pointermove', e => {
+    if (!drag || drag.w !== w || drag.id !== e.pointerId) return;
+    w.x = e.clientX - drag.dx; w.y = e.clientY - drag.dy; clamp(w); place(w);
+    interacted = true;
+  });
+  const end = e => { if (drag && drag.w === w){ w.el.classList.remove('drag'); drag = null; } };
+  w.el.addEventListener('pointerup', end); w.el.addEventListener('pointercancel', end);
+});
+addEventListener('resize', () => { wins.forEach(w => { clamp(w); }); layout(); });
+document.getElementById('reset').addEventListener('click', layout);
+
+/* ---------- Partículas ---------- */
+const th = new Float32Array(T), ph = new Float32Array(T), sp = new Float32Array(T), sd = new Float32Array(T);
+const rj = new Float32Array(T), cf = new Float32Array(T), bw = new Float32Array(T), vel = new Float32Array(T);
+const ab = new Float32Array(T), sz = new Float32Array(T), u = new Float32Array(T), tm = new Float32Array(T);
+const px = new Float32Array(T), py = new Float32Array(T);
+const hm = new Uint8Array(T), st = new Uint8Array(T);
+const bu = new Float32Array(BP), bs = new Float32Array(BP), bd = new Int8Array(BP);
+const dx_ = new Float32Array(DU), dy_ = new Float32Array(DU);
+const data = new Float32Array(T * 7);
+
+for (let i = 0; i < T; i++){
+  hm[i] = i < N ? 0 : 1;
+  th[i] = Math.random() * Math.PI * 2;
+  ph[i] = Math.acos(2 * Math.random() - 1);
+  sp[i] = 0.12 + Math.random() * 0.28;
+  sd[i] = Math.random() * Math.PI * 2;
+  bw[i] = Math.sqrt(Math.random());
+  vel[i] = 160 + Math.random() * 160;
+  cf[i] = 0.32 + Math.random() * 0.26;
+  if (Math.random() < 0.78){ rj[i] = 0.93 + Math.random() * 0.11; sz[i] = 2.2 + Math.random() * 1.4; ab[i] = 0.32 * GAIN; }
+  else { rj[i] = 0.2 + Math.random() * 0.7; sz[i] = 1.6 + Math.random() * 1.0; ab[i] = 0.22 * GAIN; }
+}
+for (let j = 0; j < BP; j++){ bu[j] = Math.random(); bs[j] = 0.12 + Math.random() * 0.22; bd[j] = Math.random() < 0.5 ? 1 : -1; }
+
+layout(); front(wins[1]);
+for (let j = 0; j < DU; j++){ dx_[j] = Math.random() * innerWidth; dy_[j] = Math.random() * innerHeight; }
+
+const C = [[0,0],[0,0]], R = [0,0];
+let SX = 0, SY = 0, SZ = 0, t = 0, fs = 0, last = performance.now(), dirX = 1, dirY = 0, D = 1;
+const CT = Math.cos(0.42), ST = Math.sin(0.42);
+let PC = 1, PS = 0;
+
+function sphere(s, rf, i){
+  const p = ph[i] + 0.12 * Math.sin(t * 0.6 + sd[i]);
+  const sp_ = Math.sin(p);
+  const x = sp_ * Math.cos(th[i]), y = Math.cos(p), z = sp_ * Math.sin(th[i]);
+  const y2 = y * CT - z * ST, z2 = y * ST + z * CT;
+  const x3 = x * PC + z2 * PS, z3 = -x * PS + z2 * PC;
+  let r = R[s] * rf * (1 + 0.035 * Math.sin(t * 1.4 + sd[i] * 3));
+  if (fs > 0.001){
+    const ox = s === 0 ? dirX : -dirX, oy = s === 0 ? dirY : -dirY;
+    const dot = x3 * ox + y2 * oy;
+    if (dot > 0){ const d2 = dot * dot; r *= 1 + fs * 0.38 * d2 * d2; }
+  }
+  SX = C[s][0] + x3 * r; SY = C[s][1] + y2 * r; SZ = z3;
+}
+function bridge(a, b, e, i){
+  const ax = C[a][0], ay = C[a][1], bx = C[b][0], by = C[b][1];
+  const lx = bx - ax, ly = by - ay, L = Math.max(1, Math.hypot(lx, ly));
+  const nx = -ly / L, ny = lx / L;
+  const neck = 0.12 + 0.38 * fs;
+  const w = ((1 - e) * R[a] * 0.8 + e * R[b] * 0.7) * (neck + (1 - neck) * Math.pow(Math.abs(2 * e - 1), 2.2)) * (0.7 + 0.6 * fs);
+  const ang = sd[i] * 2 + t * 0.9 + e * 5;
+  const lat = Math.cos(ang) * bw[i] * w + Math.sin(e * 8 - t * 2.5 + sd[i]) * w * 0.12;
+  SX = ax + lx * e + nx * lat; SY = ay + ly * e + ny * lat; SZ = Math.sin(ang);
+}
+
+const fillEl = document.getElementById('fill'), pctEl = document.getElementById('pct'), hintEl = document.getElementById('hint');
+let shownPct = -1, hintState = 0;
+
+function frame(now){
+  const dt = Math.min(0.05, (now - last) / 1000 || 0.016); last = now;
+  t += dt * MOT;
+  PC = Math.cos(t * 0.12); PS = Math.sin(t * 0.12);
+
+  for (let s = 0; s < 2; s++){
+    const w = wins[s];
+    C[s][0] = w.x + w.w / 2; C[s][1] = w.y + BAR + (w.h - BAR) / 2;
+    R[s] = 0.3 * Math.min(w.cw, w.ch);
+  }
+  const lx = C[1][0] - C[0][0], ly = C[1][1] - C[0][1];
+  D = Math.max(1, Math.hypot(lx, ly)); dirX = lx / D; dirY = ly / D;
+  const Rm = (R[0] + R[1]) / 2, far = Rm * 3.8, near = Rm * 2.0;
+  const fT = Math.max(0, Math.min(1, (far - D) / (far - near)));
+  fs += (fT - fs) * Math.min(1, dt * (fT < fs ? 6 : 3));
+  const split = fT === 0 && fs < 0.05;
+
+  const k = 1 - Math.exp(-dt * 12);
+  let o = 0;
+
+  for (let i = 0; i < M; i++){
+    const h = hm[i], ot = 1 - h;
+    th[i] += sp[i] * dt * MOT * (1 + 0.6 * Math.sin(ph[i] * 4 + sd[i]));
+    let onSphere = true;
+    switch (st[i]){
+      case 0:
+        sphere(h, rj[i], i);
+        if (fs > 0.02 && Math.random() < fs * dt * 0.2){ st[i] = 1; u[i] = 0; }
+        break;
+      case 1:
+        if (split){ st[i] = 0; sphere(h, rj[i], i); break; }
+        u[i] += dt * MOT * vel[i] / Math.max(D, 40);
+        if (u[i] >= 1){ u[i] = 1; st[i] = 2; tm[i] = 3 + Math.random() * 6; }
+        bridge(h, ot, u[i], i); onSphere = false;
+        break;
+      case 2:
+        if (split){ st[i] = 0; sphere(h, rj[i], i); break; }
+        sphere(ot, cf[i], i);
+        tm[i] -= dt * (fs > 0.03 ? 1 : 5);
+        if (tm[i] <= 0){ st[i] = 3; u[i] = 1; }
+        break;
+      default:
+        if (split){ st[i] = 0; sphere(h, rj[i], i); break; }
+        u[i] -= dt * MOT * vel[i] / Math.max(D, 40);
+        if (u[i] <= 0){ u[i] = 0; st[i] = 0; }
+        bridge(h, ot, u[i], i); onSphere = false;
+    }
+    let a;
+    if (onSphere){
+      const fr = (SZ + 1) * 0.5, rim = 1 - Math.abs(SZ);
+      a = ab[i] * (0.45 + 0.6 * fr + 1.6 * rim * rim * rim);
+    } else a = ab[i] * 1.4 * (0.55 + 0.45 * SZ);
+    px[i] += (SX - px[i]) * k; py[i] += (SY - py[i]) * k;
+    const c = COL[h];
+    data[o] = px[i]; data[o+1] = py[i]; data[o+2] = sz[i];
+    data[o+3] = c[0]; data[o+4] = c[1]; data[o+5] = c[2]; data[o+6] = a; o += 7;
+  }
+
+  for (let j = 0; j < BP; j++){
+    const i = M + j;
+    let e = (bu[j] + t * bs[j]) % 1; if (bd[j] < 0) e = 1 - e;
+    let a = 0, s = 0;
+    if (fs > 0.004){
+      bridge(0, 1, e, i);
+      const edge = Math.min(1, e / 0.12) * Math.min(1, (1 - e) / 0.12);
+      a = fs * 0.34 * GAIN * edge * (0.6 + 0.4 * SZ); s = 2.0 + 1.2 * fs;
+    }
+    data[o] = SX; data[o+1] = SY; data[o+2] = s;
+    data[o+3] = COL[0][0] + (COL[1][0] - COL[0][0]) * e;
+    data[o+4] = COL[0][1] + (COL[1][1] - COL[0][1]) * e;
+    data[o+5] = COL[0][2] + (COL[1][2] - COL[0][2]) * e;
+    data[o+6] = a; o += 7;
+  }
+
+  const W = innerWidth, H = innerHeight;
+  for (let j = 0; j < DU; j++){
+    dx_[j] += Math.sin(t * 0.3 + j) * 6 * dt; dy_[j] -= (3 + (j % 5)) * dt * MOT;
+    if (dy_[j] < -5) dy_[j] = H + 5;
+    data[o] = dx_[j]; data[o+1] = dy_[j]; data[o+2] = 1.6;
+    data[o+3] = 0.7; data[o+4] = 0.8; data[o+5] = 1.0;
+    data[o+6] = 0.1 + 0.08 * Math.sin(t * 2 + j * 1.7); o += 7;
+  }
+
+  for (const w of wins){
+    const gl = w.gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER, w.buf);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+    gl.uniform2f(w.uRes, w.cw, w.ch);
+    gl.uniform2f(w.uOff, w.x + 1, w.y + BAR + 1);
+    gl.uniform1f(w.uDpr, DPR);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.POINTS, 0, T);
+  }
+
+  const pct = Math.round(fs * 100);
+  if (pct !== shownPct){ shownPct = pct; pctEl.textContent = pct + '%'; fillEl.style.width = pct + '%'; }
+  const hs = fs > 0.6 ? 2 : (interacted ? 1 : 0);
+  if (hs !== hintState){
+    hintState = hs;
+    hintEl.textContent = hs === 2 ? 'Sepáralas para estirar y romper el puente' : 'Acércalas más: el puente aparece cerca';
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
